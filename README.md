@@ -63,6 +63,8 @@ If a word does not have a Strong's number yet, the button is disabled.
 
 Each word can include a beginner-friendly `pronunciation` field. This is a simple reading aid, not a technical pronunciation system.
 
+Beginner-friendly pronunciation helps have been added for every Hebrew word currently included in Genesis 1:1-5.
+
 Example:
 
 ```js

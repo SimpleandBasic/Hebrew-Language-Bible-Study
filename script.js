@@ -799,6 +799,8 @@ const selectedPrompt = document.querySelector("#selectedPrompt");
 const blueLetterBibleButton = document.querySelector("#blueLetterBibleButton");
 const googleTranslateButton = document.querySelector("#googleTranslateButton");
 const hearWholeVerseButton = document.querySelector("#hearWholeVerseButton");
+const aboutSourcesButton = document.querySelector("#aboutSourcesButton");
+const aboutSourcesPanel = document.querySelector("#aboutSourcesPanel");
 
 function displayValue(value, fallback = "Not added yet") {
   if (Array.isArray(value)) {
@@ -952,6 +954,13 @@ hearWholeVerseButton.addEventListener("click", () => {
   if (url) {
     window.open(url, "_blank", "noopener,noreferrer");
   }
+});
+
+aboutSourcesButton.addEventListener("click", () => {
+  const isOpen = !aboutSourcesPanel.hidden;
+  aboutSourcesPanel.hidden = isOpen;
+  aboutSourcesButton.classList.toggle("active", !isOpen);
+  aboutSourcesButton.setAttribute("aria-expanded", String(!isOpen));
 });
 
 render();

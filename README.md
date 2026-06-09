@@ -15,6 +15,32 @@ Open `index.html` in a browser. Click a Hebrew word to see:
 
 The app currently includes Genesis 1:1-5 with word-level notes.
 
+## Sources
+
+### Hebrew Bible Text
+
+The Hebrew text in this study app is based on the Masoretic Text tradition, using Genesis 1 Hebrew forms commonly found in Westminster Leningrad Codex / Leningrad Codex based resources.
+
+### Study Notes
+
+The English glosses, transliterations, roots, grammar notes, context notes, study prompts, pronunciation helps, and theme tags are app study notes. They are meant to help beginners and should be checked against trusted Hebrew lexicons and Bible study resources.
+
+### Strong's Numbers
+
+Strong's numbers are used as study index numbers that help connect Hebrew words to lexicon resources.
+
+### External Study Tools
+
+Blue Letter Bible is linked for Strong's / lexicon lookup. Google Translate is linked as a modern Hebrew audio helper.
+
+### Pronunciation Note
+
+Google Translate audio can be helpful for hearing modern Hebrew pronunciation, but it should not be treated as perfect Biblical Hebrew pronunciation.
+
+### Disclaimer
+
+This app is a beginner-friendly study tool, not a final scholarly authority. Users should compare the notes with trusted Hebrew Bible resources.
+
 ## Blue Letter Bible Links
 
 The detail panel shows the selected word's `strongs` value. If that value includes a Strong's number, the **Open in Blue Letter Bible** button opens the matching lexicon page.

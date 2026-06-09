@@ -57,6 +57,16 @@ https://translate.google.com/?sl=iw&tl=en&text={encoded-hebrew-word}&op=translat
 
 This is included as a helpful modern Hebrew audio reference. It should not be treated as a full Biblical Hebrew pronunciation system.
 
+The selected word detail rows are styled so longer labels, such as `PRONUNCIATION`, have room to wrap cleanly. On small screens, each label stacks above its value so the text does not overlap.
+
+The **Hear Whole Verse** button opens the current verse in Google Translate by joining the active verse's Hebrew words in order:
+
+```js
+const hebrewVerse = verse.words.map((word) => word.hebrew).join(" ");
+```
+
+This whole-verse audio helper follows the same modern Hebrew caveat as the selected-word helper.
+
 ## Data Structure
 
 Verse and word data live in the `verses` array in `script.js`.

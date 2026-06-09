@@ -798,6 +798,7 @@ const selectedContext = document.querySelector("#selectedContext");
 const selectedPrompt = document.querySelector("#selectedPrompt");
 const blueLetterBibleButton = document.querySelector("#blueLetterBibleButton");
 const googleTranslateButton = document.querySelector("#googleTranslateButton");
+const hearWholeVerseButton = document.querySelector("#hearWholeVerseButton");
 
 function displayValue(value, fallback = "Not added yet") {
   if (Array.isArray(value)) {
@@ -832,6 +833,10 @@ function getGoogleTranslateUrl(hebrew) {
   return `https://translate.google.com/?sl=iw&tl=en&text=${encodeURIComponent(hebrew)}&op=translate`;
 }
 
+function getHebrewVerse(verse) {
+  return verse.words.map((word) => word.hebrew).join(" ");
+}
+
 function renderTabs() {
   verseTabs.innerHTML = "";
   verses.forEach((verse, index) => {
@@ -855,6 +860,7 @@ function renderVerse() {
   wordCount.textContent = `${verse.words.length} Hebrew words`;
   englishLine.textContent = verse.english;
   verseContext.textContent = verse.context;
+  hearWholeVerseButton.dataset.url = getGoogleTranslateUrl(getHebrewVerse(verse));
   hebrewLine.innerHTML = "";
 
   verse.words.forEach((word, index) => {
@@ -936,6 +942,13 @@ blueLetterBibleButton.addEventListener("click", () => {
 
 googleTranslateButton.addEventListener("click", () => {
   const url = googleTranslateButton.dataset.url;
+  if (url) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+});
+
+hearWholeVerseButton.addEventListener("click", () => {
+  const url = hearWholeVerseButton.dataset.url;
   if (url) {
     window.open(url, "_blank", "noopener,noreferrer");
   }

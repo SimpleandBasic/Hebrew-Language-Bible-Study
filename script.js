@@ -843,8 +843,12 @@ const selectedPrompt = document.querySelector("#selectedPrompt");
 const blueLetterBibleButton = document.querySelector("#blueLetterBibleButton");
 const googleTranslateButton = document.querySelector("#googleTranslateButton");
 const hearWholeVerseButton = document.querySelector("#hearWholeVerseButton");
+const speakWholeVerseButton = document.querySelector("#speakWholeVerseButton");
+const speakSelectedWordButton = document.querySelector("#speakSelectedWordButton");
+const audioHelperNote = document.querySelector("#audioHelperNote");
 const aboutSourcesButton = document.querySelector("#aboutSourcesButton");
 const aboutSourcesPanel = document.querySelector("#aboutSourcesPanel");
+const speechSupported = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 
 function displayValue(value, fallback = "Not added yet") {
   if (Array.isArray(value)) {
@@ -883,6 +887,28 @@ function getHebrewVerse(verse) {
   return verse.words.map((word) => word.hebrew).join(" ");
 }
 
+function speakHebrew(text) {
+  if (!speechSupported || !text) {
+    audioHelperNote.textContent = "Browser audio is not available here. Google Translate is available as a backup audio helper.";
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "he-IL";
+  window.speechSynthesis.speak(utterance);
+}
+
+function setSpeechAvailability() {
+  if (speechSupported) {
+    return;
+  }
+
+  speakWholeVerseButton.disabled = true;
+  speakSelectedWordButton.disabled = true;
+  audioHelperNote.textContent = "Browser audio is not available here. Google Translate is available as a backup audio helper.";
+}
+
 function renderTabs() {
   verseTabs.innerHTML = "";
   verses.forEach((verse, index) => {
@@ -907,6 +933,7 @@ function renderVerse() {
   englishLine.textContent = verse.english;
   verseContext.textContent = verse.context;
   hearWholeVerseButton.dataset.url = getGoogleTranslateUrl(getHebrewVerse(verse));
+  speakWholeVerseButton.dataset.text = getHebrewVerse(verse);
   hebrewLine.innerHTML = "";
 
   verse.words.forEach((word, index) => {
@@ -951,6 +978,7 @@ function renderWord() {
     : "No Blue Letter Bible link yet";
 
   googleTranslateButton.dataset.url = getGoogleTranslateUrl(word.hebrew);
+  speakSelectedWordButton.dataset.text = word.hebrew;
 }
 
 function render() {
@@ -1000,6 +1028,14 @@ hearWholeVerseButton.addEventListener("click", () => {
   }
 });
 
+speakWholeVerseButton.addEventListener("click", () => {
+  speakHebrew(speakWholeVerseButton.dataset.text);
+});
+
+speakSelectedWordButton.addEventListener("click", () => {
+  speakHebrew(speakSelectedWordButton.dataset.text);
+});
+
 aboutSourcesButton.addEventListener("click", () => {
   const isOpen = !aboutSourcesPanel.hidden;
   aboutSourcesPanel.hidden = isOpen;
@@ -1008,3 +1044,4 @@ aboutSourcesButton.addEventListener("click", () => {
 });
 
 render();
+setSpeechAvailability();

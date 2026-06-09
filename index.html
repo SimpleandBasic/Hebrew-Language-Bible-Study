@@ -20,6 +20,9 @@
             <button class="verse-audio-button" id="hearWholeVerseButton" type="button">
               Hear Whole Verse
             </button>
+            <button class="speaker-button" id="speakWholeVerseButton" type="button" aria-label="Hear whole verse" title="Hear whole verse">
+              🔊
+            </button>
             <button class="source-toggle-button" id="aboutSourcesButton" type="button" aria-controls="aboutSourcesPanel" aria-expanded="false">
               About / Sources
             </button>
@@ -78,7 +81,12 @@
           <p class="eyebrow">Selected Word</p>
           <button class="icon-button" id="copyWord" type="button" aria-label="Copy selected word" title="Copy word">⧉</button>
         </div>
-        <div class="selected-word" id="selectedHebrew" dir="rtl" lang="he"></div>
+        <div class="selected-word-wrap">
+          <div class="selected-word" id="selectedHebrew" dir="rtl" lang="he"></div>
+          <button class="speaker-button selected-speaker" id="speakSelectedWordButton" type="button" aria-label="Hear selected word" title="Hear selected word">
+            🔊
+          </button>
+        </div>
         <p class="transliteration" id="selectedTransliteration"></p>
 
         <dl class="word-facts">
@@ -114,7 +122,7 @@
         <button class="lexicon-button secondary-action" id="googleTranslateButton" type="button">
           Hear in Google Translate
         </button>
-        <p class="helper-note">Modern Hebrew audio helper</p>
+        <p class="helper-note" id="audioHelperNote">Audio uses your browser's Hebrew voice when available. Google Translate is available as a backup audio helper.</p>
 
         <section class="detail-section">
           <h2>Context</h2>

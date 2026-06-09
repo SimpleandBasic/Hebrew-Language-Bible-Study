@@ -95,6 +95,16 @@ const hebrewVerse = verse.words.map((word) => word.hebrew).join(" ");
 
 This whole-verse audio helper follows the same modern Hebrew caveat as the selected-word helper.
 
+## In-App Hebrew Audio
+
+Small speaker buttons use the browser's built-in Web Speech API to read Hebrew aloud when a Hebrew voice is available.
+
+- The selected-word speaker reads the currently selected Hebrew word.
+- The whole-verse speaker reads the full active Hebrew verse.
+- Google Translate remains available as a backup audio helper.
+
+If browser speech is not supported, the speaker buttons are disabled and the app shows a browser-audio unavailable message.
+
 ## Data Structure
 
 Verse and word data live in the `verses` array in `script.js`.

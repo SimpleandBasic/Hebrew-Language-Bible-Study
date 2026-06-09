@@ -15,6 +15,27 @@ Open `index.html` in a browser. Click a Hebrew word to see:
 
 The app currently includes Genesis 1:1-5 with word-level notes.
 
+## Publish with GitHub Pages
+
+This app is ready to publish as a static GitHub Pages site because `index.html`, `styles.css`, and `script.js` are in the repository root and use relative file links.
+
+To publish:
+
+1. Go to the repo on GitHub.
+2. Open Settings.
+3. Open Pages.
+4. Under Build and deployment, choose Deploy from a branch.
+5. Choose branch `main` and folder `/root`.
+6. Save.
+7. Wait a few minutes for GitHub to publish the site.
+8. The site should be available at:
+
+```text
+https://simpleandbasic.github.io/Hebrew-Language-Bible-Study/
+```
+
+For free GitHub Pages publishing, the repo may need to be public depending on the GitHub plan.
+
 ## Sources
 
 ### Hebrew Bible Text

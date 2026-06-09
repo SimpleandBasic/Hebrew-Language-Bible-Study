@@ -789,10 +789,12 @@ const selectedHebrew = document.querySelector("#selectedHebrew");
 const selectedTransliteration = document.querySelector("#selectedTransliteration");
 const selectedGloss = document.querySelector("#selectedGloss");
 const selectedRoot = document.querySelector("#selectedRoot");
+const selectedStrongs = document.querySelector("#selectedStrongs");
 const selectedForm = document.querySelector("#selectedForm");
 const selectedGrammar = document.querySelector("#selectedGrammar");
 const selectedContext = document.querySelector("#selectedContext");
 const selectedPrompt = document.querySelector("#selectedPrompt");
+const blueLetterBibleButton = document.querySelector("#blueLetterBibleButton");
 
 function displayValue(value, fallback = "Not added yet") {
   if (Array.isArray(value)) {
@@ -806,11 +808,21 @@ function formatRoot(word) {
   const rootParts = [
     word.root,
     word.rootTransliteration ? `(${word.rootTransliteration})` : "",
-    word.rootMeaning ? `- ${word.rootMeaning}` : "",
-    word.strongs ? `[${word.strongs}]` : ""
+    word.rootMeaning ? `- ${word.rootMeaning}` : ""
   ].filter(Boolean);
 
   return rootParts.length ? rootParts.join(" ") : "Not added yet";
+}
+
+function getPrimaryStrongs(strongs) {
+  return strongs?.match(/[HG]\d+/i)?.[0] || "";
+}
+
+function getBlueLetterBibleUrl(strongs) {
+  const primaryStrongs = getPrimaryStrongs(strongs);
+  return primaryStrongs
+    ? `https://www.blueletterbible.org/lexicon/${primaryStrongs.toLowerCase()}/kjv/wlc/0-1/`
+    : "";
 }
 
 function renderTabs() {
@@ -865,10 +877,18 @@ function renderWord() {
   selectedTransliteration.textContent = displayValue(word.transliteration, "");
   selectedGloss.textContent = displayValue(word.gloss);
   selectedRoot.textContent = formatRoot(word);
+  selectedStrongs.textContent = displayValue(word.strongs);
   selectedForm.textContent = displayValue(word.form);
   selectedGrammar.textContent = displayValue(word.grammar);
   selectedContext.textContent = displayValue(contextParts.join(" "));
   selectedPrompt.textContent = displayValue(word.prompt, defaultPrompt);
+
+  const blueLetterBibleUrl = getBlueLetterBibleUrl(word.strongs);
+  blueLetterBibleButton.disabled = !blueLetterBibleUrl;
+  blueLetterBibleButton.dataset.url = blueLetterBibleUrl;
+  blueLetterBibleButton.textContent = blueLetterBibleUrl
+    ? "Open in Blue Letter Bible"
+    : "No Blue Letter Bible link yet";
 }
 
 function render() {
@@ -894,6 +914,13 @@ document.querySelector("#copyWord").addEventListener("click", async () => {
     await navigator.clipboard.writeText(text);
   } catch {
     selectedPrompt.textContent = text;
+  }
+});
+
+blueLetterBibleButton.addEventListener("click", () => {
+  const url = blueLetterBibleButton.dataset.url;
+  if (url) {
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 });
 

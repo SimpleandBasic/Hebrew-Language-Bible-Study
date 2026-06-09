@@ -10,8 +10,27 @@ Open `index.html` in a browser. Click a Hebrew word to see:
 - Form and grammar
 - Context notes
 - A study prompt
+- A Blue Letter Bible lexicon link when a Strong's number is available
 
 The app currently includes Genesis 1:1-5 with word-level notes.
+
+## Blue Letter Bible Links
+
+The detail panel shows the selected word's `strongs` value. If that value includes a Strong's number, the **Open in Blue Letter Bible** button opens the matching lexicon page.
+
+The app uses this URL pattern:
+
+```text
+https://www.blueletterbible.org/lexicon/{strongs-lowercase}/kjv/wlc/0-1/
+```
+
+For example, `strongs: "H7225"` opens:
+
+```text
+https://www.blueletterbible.org/lexicon/h7225/kjv/wlc/0-1/
+```
+
+If a word does not have a Strong's number yet, the button is disabled.
 
 ## Data Structure
 

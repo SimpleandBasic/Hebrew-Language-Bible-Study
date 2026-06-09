@@ -262,6 +262,31 @@ dd {
   line-height: 1.45;
 }
 
+.lexicon-button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.lexicon-button:hover,
+.lexicon-button:focus-visible {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  outline: 2px solid rgba(47, 118, 109, 0.24);
+  outline-offset: 2px;
+}
+
+.lexicon-button:disabled {
+  border-color: var(--line);
+  background: #eee8df;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .detail-section {
   padding-top: 4px;
 }

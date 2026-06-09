@@ -1,3 +1,6 @@
+const defaultPrompt =
+  "Compare the Hebrew form with the English translation and ask what had to be added, compressed, or left untranslated.";
+
 const verses = [
   {
     reference: "Genesis 1:1",
@@ -9,77 +12,121 @@ const verses = [
         hebrew: "בְּרֵאשִׁית",
         transliteration: "bereshit",
         gloss: "in beginning, at first",
-        root: "רֹאשׁ (rosh), head / beginning",
+        root: "רֹאשׁ",
+        rootTransliteration: "rosh",
+        rootMeaning: "head, beginning, first part",
+        strongs: "H7225",
         form: "Preposition בְּ + feminine noun רֵאשִׁית",
         grammar: "Construct-like opening phrase; no explicit definite article.",
+        lexiconNote:
+          "רֵאשִׁית can describe the first, beginning, or choicest part of something.",
         context:
           "The phrase does not include the normal Hebrew word for 'the.' English translations usually supply 'the beginning' because the sentence functions as the Bible's opening reference point.",
-        prompt: "Notice how Hebrew can express a definite idea without using the article when the larger sentence makes the reference clear."
+        themeTags: ["beginning", "creation", "time"],
+        prompt:
+          "Notice how Hebrew can express a definite idea without using the article when the larger sentence makes the reference clear."
       },
       {
         hebrew: "בָּרָא",
         transliteration: "bara",
         gloss: "he created",
-        root: "ברא (b-r-ʾ), create",
+        root: "ברא",
+        rootTransliteration: "b-r-a",
+        rootMeaning: "create, shape, bring into being",
+        strongs: "H1254",
         form: "Qal perfect, 3rd person masculine singular",
         grammar: "Finite verb with God as the subject.",
+        lexiconNote:
+          "In the Hebrew Bible, ברא is strongly associated with divine creative action.",
         context:
-          "This verb is strongly associated with divine creative action in the Hebrew Bible. It does not by itself explain the mechanics of creation; it emphasizes God's agency.",
+          "This verb does not by itself explain the mechanics of creation; it emphasizes God's agency.",
+        themeTags: ["creation", "divine action"],
         prompt: "Ask what the verse wants to foreground: process, timeline, or the identity of the creator?"
       },
       {
         hebrew: "אֱלֹהִים",
         transliteration: "elohim",
         gloss: "God",
-        root: "אל / אלה, God or mighty one",
+        root: "אלהים",
+        rootTransliteration: "elohim",
+        rootMeaning: "God, deity, mighty one",
+        strongs: "H430",
         form: "Masculine plural form used here with singular meaning",
         grammar: "Subject of the singular verb בָּרָא.",
+        lexiconNote:
+          "The form is grammatically plural, but singular verbs and context often show when it refers to Israel's God.",
         context:
           "Although the form looks plural, the singular verb shows that it refers here to Israel's God. Hebrew often lets grammar and context settle meaning.",
+        themeTags: ["God", "grammar", "subject"],
         prompt: "Watch how verb agreement helps interpret a noun that could otherwise look ambiguous."
       },
       {
         hebrew: "אֵת",
         transliteration: "et",
         gloss: "direct-object marker",
-        root: "None as a normal lexical root in this use",
+        root: "",
+        rootTransliteration: "",
+        rootMeaning: "grammatical marker rather than a normal lexical root",
+        strongs: "H853",
         form: "Object marker particle",
         grammar: "Marks the following definite object.",
+        lexiconNote:
+          "This particle is usually not translated into English, but it is important for Hebrew syntax.",
         context:
-          "This word is usually untranslated. It tells the Hebrew reader that the next phrase is the object of the verb.",
-        prompt: "This is a great example of a word that matters grammatically even when it disappears in English."
+          "This word tells the Hebrew reader that the next phrase is the object of the verb.",
+        themeTags: ["syntax", "object marker"],
+        prompt:
+          "This is a great example of a word that matters grammatically even when it disappears in English."
       },
       {
         hebrew: "הַשָּׁמַיִם",
         transliteration: "hashamayim",
         gloss: "the heavens, the sky",
-        root: "שׁמים (sh-m-y-m), heavens / sky",
+        root: "שׁמים",
+        rootTransliteration: "shamayim",
+        rootMeaning: "heavens, sky",
+        strongs: "H8064",
         form: "Definite plural-like noun with הַ",
         grammar: "Direct object marked by אֵת.",
+        lexiconNote:
+          "שָׁמַיִם can refer to sky, heavens, or the upper realm depending on context.",
         context:
-          "The word can refer to sky, heavens, or the upper realm. In this pair with 'earth,' it means the whole ordered cosmos.",
+          "In this pair with 'earth,' it means the whole ordered cosmos.",
+        themeTags: ["heavens", "cosmos", "creation"],
         prompt: "Read 'heavens and earth' as a totalizing pair: everything above and below."
       },
       {
         hebrew: "וְאֵת",
         transliteration: "ve'et",
         gloss: "and [the object marker]",
-        root: "ו + אֵת",
+        root: "ו + את",
+        rootTransliteration: "vav + et",
+        rootMeaning: "and + direct-object marker",
+        strongs: "H853",
         form: "Conjunction וְ + object marker",
         grammar: "Introduces the second definite object.",
+        lexiconNote:
+          "Hebrew often attaches conjunctions and other small function words as prefixes.",
         context:
-          "The prefixed vav links the two objects: the heavens and the earth. Hebrew commonly attaches small function words directly to the following word.",
+          "The prefixed vav links the two objects: the heavens and the earth.",
+        themeTags: ["syntax", "conjunction", "object marker"],
         prompt: "Notice that Hebrew prefixes can carry words English writes separately."
       },
       {
         hebrew: "הָאָרֶץ",
         transliteration: "ha'aretz",
         gloss: "the earth, the land",
-        root: "ארץ (ʾ-r-ts), earth / land",
+        root: "ארץ",
+        rootTransliteration: "erets",
+        rootMeaning: "earth, land, ground, territory",
+        strongs: "H776",
         form: "Definite feminine noun with הָ",
         grammar: "Second direct object of בָּרָא.",
+        lexiconNote:
+          "אֶרֶץ can mean the whole earth or a specific land, depending on context.",
         context:
-          "Depending on context, this word can mean the whole earth or a specific land. Here it pairs with the heavens and points to the lower created realm.",
+          "Here it pairs with the heavens and points to the lower created realm.",
+        themeTags: ["earth", "land", "cosmos"],
         prompt: "Keep a flexible mental range: 'earth' and 'land' are both live possibilities in Hebrew."
       }
     ]
@@ -91,19 +138,199 @@ const verses = [
     context:
       "Verse 2 describes the unformed condition before God's ordering speech begins. The repeated phrase 'over the face of' creates a vivid spatial picture.",
     words: [
-      ["וְהָאָרֶץ", "veha'aretz", "and the earth", "ארץ", "Conjunction + definite noun", "The focus narrows from the whole cosmos to the earth."],
-      ["הָיְתָה", "hayetah", "was", "היה", "Qal perfect, 3rd feminine singular", "The feminine verb agrees with הָאָרֶץ."],
-      ["תֹהוּ", "tohu", "formlessness", "תהו", "Noun", "A state of waste, emptiness, or unformedness."],
-      ["וָבֹהוּ", "vavohu", "and emptiness", "בהו", "Conjunction + noun", "A rhymed pair with תֹהוּ, emphasizing disorder and vacancy."],
-      ["וְחֹשֶׁךְ", "vechoshekh", "and darkness", "חשׁך", "Conjunction + noun", "Darkness is part of the scene that God will begin to order."],
-      ["עַל־פְּנֵי", "al-penei", "over the face of", "פנה", "Preposition + plural construct noun", "A Hebrew idiom for being over or upon the surface of something."],
-      ["תְהוֹם", "tehom", "the deep", "תהום", "Noun", "The watery deep, pictured as a vast primeval depth."],
-      ["וְרוּחַ", "veruach", "and spirit / wind / breath", "רוח", "Conjunction + noun", "Ruach can mean spirit, wind, or breath; context guides the choice."],
-      ["אֱלֹהִים", "elohim", "God", "אלהים", "Noun", "Here it forms 'Spirit of God' or possibly 'wind of God.'"],
-      ["מְרַחֶפֶת", "merachefet", "hovering", "רחף", "Piel participle, feminine singular", "The participle agrees with רוּחַ, a grammatically feminine noun."],
-      ["עַל־פְּנֵי", "al-penei", "over the face of", "פנה", "Repeated prepositional phrase", "The repetition mirrors the earlier phrase over the deep."],
-      ["הַמָּיִם", "hamayim", "the waters", "מים", "Definite plural noun", "Waters are central in the early creation ordering sequence."]
-    ].map(makeWord)
+      {
+        hebrew: "וְהָאָרֶץ",
+        transliteration: "veha'aretz",
+        gloss: "and the earth",
+        root: "ארץ",
+        rootTransliteration: "erets",
+        rootMeaning: "earth, land, ground, territory",
+        strongs: "H776",
+        form: "Conjunction + definite noun",
+        grammar: "וְ joins the sentence; ה marks the noun as definite.",
+        lexiconNote:
+          "The same word from Genesis 1:1 now becomes the focus of the description.",
+        context: "The focus narrows from the whole cosmos to the earth.",
+        themeTags: ["earth", "creation setting"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "הָיְתָה",
+        transliteration: "hayetah",
+        gloss: "was",
+        root: "היה",
+        rootTransliteration: "hayah",
+        rootMeaning: "be, become, happen",
+        strongs: "H1961",
+        form: "Qal perfect, 3rd feminine singular",
+        grammar: "The feminine verb agrees with הָאָרֶץ.",
+        lexiconNote:
+          "היה is the basic Hebrew verb for being, becoming, or coming to pass.",
+        context: "The verb introduces the earth's condition before the ordering acts.",
+        themeTags: ["state", "grammar"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "תֹהוּ",
+        transliteration: "tohu",
+        gloss: "formlessness",
+        root: "תהו",
+        rootTransliteration: "tohu",
+        rootMeaning: "waste, emptiness, formlessness",
+        strongs: "H8414",
+        form: "Noun",
+        grammar: "First noun in a paired description.",
+        lexiconNote:
+          "תֹהוּ can describe desolation, emptiness, or an unproductive waste.",
+        context: "A state of waste, emptiness, or unformedness.",
+        themeTags: ["formlessness", "disorder"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וָבֹהוּ",
+        transliteration: "vavohu",
+        gloss: "and emptiness",
+        root: "בהו",
+        rootTransliteration: "bohu",
+        rootMeaning: "emptiness, void",
+        strongs: "H922",
+        form: "Conjunction + noun",
+        grammar: "Paired with תֹהוּ as a rhymed expression.",
+        lexiconNote:
+          "בֹהוּ appears rarely and is most recognizable in the phrase תֹהוּ וָבֹהוּ.",
+        context: "A rhymed pair with תֹהוּ, emphasizing disorder and vacancy.",
+        themeTags: ["emptiness", "disorder"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וְחֹשֶׁךְ",
+        transliteration: "vechoshekh",
+        gloss: "and darkness",
+        root: "חשׁך",
+        rootTransliteration: "choshekh",
+        rootMeaning: "darkness",
+        strongs: "H2822",
+        form: "Conjunction + noun",
+        grammar: "Adds another feature of the pre-ordered scene.",
+        lexiconNote:
+          "חֹשֶׁךְ can describe physical darkness and, in some contexts, figurative gloom.",
+        context: "Darkness is part of the scene that God will begin to order.",
+        themeTags: ["darkness", "pre-creation scene"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "עַל־פְּנֵי",
+        transliteration: "al-penei",
+        gloss: "over the face of",
+        root: "פנה",
+        rootTransliteration: "panah / panim",
+        rootMeaning: "face, surface, presence",
+        strongs: "H6440",
+        form: "Preposition + plural construct noun",
+        grammar: "Construct phrase joined by maqqef.",
+        lexiconNote:
+          "פָּנִים is plural in form and often means face, presence, or surface.",
+        context: "A Hebrew idiom for being over or upon the surface of something.",
+        themeTags: ["space", "surface", "idiom"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "תְהוֹם",
+        transliteration: "tehom",
+        gloss: "the deep",
+        root: "תהום",
+        rootTransliteration: "tehom",
+        rootMeaning: "deep, watery depth",
+        strongs: "H8415",
+        form: "Noun",
+        grammar: "Object of the preceding construct phrase.",
+        lexiconNote:
+          "תְהוֹם pictures a vast depth, often associated with waters.",
+        context: "The watery deep, pictured as a vast primeval depth.",
+        themeTags: ["waters", "deep", "creation setting"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וְרוּחַ",
+        transliteration: "veruach",
+        gloss: "and spirit / wind / breath",
+        root: "רוח",
+        rootTransliteration: "ruach",
+        rootMeaning: "spirit, wind, breath",
+        strongs: "H7307",
+        form: "Conjunction + noun",
+        grammar: "רוּחַ is grammatically feminine.",
+        lexiconNote:
+          "רוּחַ has a wide semantic range: spirit, wind, breath, or life-giving force.",
+        context: "Ruach can mean spirit, wind, or breath; context guides the choice.",
+        themeTags: ["Spirit", "wind", "ambiguity"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אֱלֹהִים",
+        transliteration: "elohim",
+        gloss: "God",
+        root: "אלהים",
+        rootTransliteration: "elohim",
+        rootMeaning: "God, deity, mighty one",
+        strongs: "H430",
+        form: "Noun",
+        grammar: "Forms the phrase רוּחַ אֱלֹהִים.",
+        lexiconNote:
+          "In construct-like phrases, אֱלֹהִים can identify possession, source, or divine association.",
+        context: "Here it forms 'Spirit of God' or possibly 'wind of God.'",
+        themeTags: ["God", "Spirit", "interpretation"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "מְרַחֶפֶת",
+        transliteration: "merachefet",
+        gloss: "hovering",
+        root: "רחף",
+        rootTransliteration: "rachaf",
+        rootMeaning: "hover, flutter, move over",
+        strongs: "H7363",
+        form: "Piel participle, feminine singular",
+        grammar: "The participle agrees with רוּחַ, a grammatically feminine noun.",
+        lexiconNote:
+          "The verb suggests hovering, fluttering, or moving over something.",
+        context: "The participle agrees with רוּחַ, a grammatically feminine noun.",
+        themeTags: ["Spirit", "movement", "waters"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "עַל־פְּנֵי",
+        transliteration: "al-penei",
+        gloss: "over the face of",
+        root: "פנה",
+        rootTransliteration: "panah / panim",
+        rootMeaning: "face, surface, presence",
+        strongs: "H6440",
+        form: "Repeated prepositional phrase",
+        grammar: "Repeats the earlier spatial phrase.",
+        lexiconNote:
+          "The repeated phrase gives the verse a balanced visual structure.",
+        context: "The repetition mirrors the earlier phrase over the deep.",
+        themeTags: ["space", "repetition", "surface"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "הַמָּיִם",
+        transliteration: "hamayim",
+        gloss: "the waters",
+        root: "מים",
+        rootTransliteration: "mayim",
+        rootMeaning: "water, waters",
+        strongs: "H4325",
+        form: "Definite plural noun",
+        grammar: "Definite object of the repeated spatial phrase.",
+        lexiconNote:
+          "מַיִם is plural in form and commonly translated as water or waters.",
+        context: "Waters are central in the early creation ordering sequence.",
+        themeTags: ["waters", "creation setting"],
+        prompt: defaultPrompt
+      }
+    ]
   },
   {
     reference: "Genesis 1:3",
@@ -111,12 +338,87 @@ const verses = [
     context:
       "Creation begins through divine speech. The short command and immediate result give the verse its force.",
     words: [
-      ["וַיֹּאמֶר", "vayomer", "and he said", "אמר", "Wayyiqtol verb", "A standard Hebrew narrative form that moves the story forward."],
-      ["אֱלֹהִים", "elohim", "God", "אלהים", "Noun", "The speaker is the same God who created in verse 1."],
-      ["יְהִי", "yehi", "let there be", "היה", "Jussive-like Qal form", "A command or volitive expression calling something into existence."],
-      ["אוֹר", "or", "light", "אור", "Noun", "Light appears before sun and moon, so the focus is order, visibility, and separation."],
-      ["וַיְהִי־אוֹר", "vayehi-or", "and there was light", "היה / אור", "Verb + noun joined by maqqef", "The result echoes the command almost exactly."]
-    ].map(makeWord)
+      {
+        hebrew: "וַיֹּאמֶר",
+        transliteration: "vayomer",
+        gloss: "and he said",
+        root: "אמר",
+        rootTransliteration: "amar",
+        rootMeaning: "say, speak",
+        strongs: "H559",
+        form: "Wayyiqtol verb",
+        grammar: "A standard Hebrew narrative form that moves the story forward.",
+        lexiconNote:
+          "אמר is the ordinary verb for speaking, but in Genesis 1 divine speech creates and orders.",
+        context: "A standard Hebrew narrative form that moves the story forward.",
+        themeTags: ["speech", "creation", "narrative"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אֱלֹהִים",
+        transliteration: "elohim",
+        gloss: "God",
+        root: "אלהים",
+        rootTransliteration: "elohim",
+        rootMeaning: "God, deity, mighty one",
+        strongs: "H430",
+        form: "Noun",
+        grammar: "Subject of וַיֹּאמֶר.",
+        lexiconNote:
+          "The speaker is the creator introduced in Genesis 1:1.",
+        context: "The speaker is the same God who created in verse 1.",
+        themeTags: ["God", "speech"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "יְהִי",
+        transliteration: "yehi",
+        gloss: "let there be",
+        root: "היה",
+        rootTransliteration: "hayah",
+        rootMeaning: "be, become, happen",
+        strongs: "H1961",
+        form: "Jussive-like Qal form",
+        grammar: "A command or volitive expression calling something into existence.",
+        lexiconNote:
+          "The form expresses a desired or commanded state: 'let it be.'",
+        context: "A command or volitive expression calling something into existence.",
+        themeTags: ["command", "creation", "being"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אוֹר",
+        transliteration: "or",
+        gloss: "light",
+        root: "אור",
+        rootTransliteration: "or",
+        rootMeaning: "light",
+        strongs: "H216",
+        form: "Noun",
+        grammar: "Object or result named in the command.",
+        lexiconNote:
+          "אוֹר is light as illumination; later Genesis 1 distinguishes light-bearing bodies.",
+        context: "Light appears before sun and moon, so the focus is order, visibility, and separation.",
+        themeTags: ["light", "order", "creation"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וַיְהִי־אוֹר",
+        transliteration: "vayehi-or",
+        gloss: "and there was light",
+        root: "היה / אור",
+        rootTransliteration: "hayah / or",
+        rootMeaning: "be / light",
+        strongs: "H1961 / H216",
+        form: "Verb + noun joined by maqqef",
+        grammar: "The result echoes the command almost exactly.",
+        lexiconNote:
+          "The repeated היה + אור pattern highlights immediate fulfillment.",
+        context: "The result echoes the command almost exactly.",
+        themeTags: ["fulfillment", "light", "creation"],
+        prompt: defaultPrompt
+      }
+    ]
   },
   {
     reference: "Genesis 1:4",
@@ -124,17 +426,167 @@ const verses = [
     context:
       "God evaluates and separates. These two actions become a pattern in the chapter: naming, distinguishing, and ordering.",
     words: [
-      ["וַיַּרְא", "vayyar", "and he saw", "ראה", "Wayyiqtol verb", "A narrative verb introducing God's evaluation."],
-      ["אֱלֹהִים", "elohim", "God", "אלהים", "Noun", "God is the evaluator of creation's goodness."],
-      ["אֶת־הָאוֹר", "et-ha'or", "the light", "אור", "Object marker + definite noun", "The object marker is joined to the noun by maqqef."],
-      ["כִּי־טוֹב", "ki-tov", "that it was good", "טוב", "Particle + adjective", "Good here means fitting, beneficial, or rightly ordered."],
-      ["וַיַּבְדֵּל", "vayyavdel", "and he separated", "בדל", "Hiphil wayyiqtol verb", "God creates order by making meaningful distinctions."],
-      ["אֱלֹהִים", "elohim", "God", "אלהים", "Noun", "The repeated subject slows the line and emphasizes divine action."],
-      ["בֵּין", "bein", "between", "בין", "Preposition", "Often paired with a second בֵּין or וּבֵין."],
-      ["הָאוֹר", "ha'or", "the light", "אור", "Definite noun", "One side of the separation."],
-      ["וּבֵין", "uvein", "and between", "בין", "Conjunction + preposition", "Completes the Hebrew 'between X and between Y' construction."],
-      ["הַחֹשֶׁךְ", "hachoshekh", "the darkness", "חשׁך", "Definite noun", "The other side of the separation."]
-    ].map(makeWord)
+      {
+        hebrew: "וַיַּרְא",
+        transliteration: "vayyar",
+        gloss: "and he saw",
+        root: "ראה",
+        rootTransliteration: "ra'ah",
+        rootMeaning: "see, perceive, look",
+        strongs: "H7200",
+        form: "Wayyiqtol verb",
+        grammar: "A narrative verb introducing God's evaluation.",
+        lexiconNote:
+          "ראה can mean physical seeing or evaluative perception.",
+        context: "A narrative verb introducing God's evaluation.",
+        themeTags: ["seeing", "evaluation"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אֱלֹהִים",
+        transliteration: "elohim",
+        gloss: "God",
+        root: "אלהים",
+        rootTransliteration: "elohim",
+        rootMeaning: "God, deity, mighty one",
+        strongs: "H430",
+        form: "Noun",
+        grammar: "Subject of the evaluative verb.",
+        lexiconNote:
+          "God is the evaluator of creation's goodness.",
+        context: "God is the evaluator of creation's goodness.",
+        themeTags: ["God", "evaluation"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אֶת־הָאוֹר",
+        transliteration: "et-ha'or",
+        gloss: "the light",
+        root: "אור",
+        rootTransliteration: "or",
+        rootMeaning: "light",
+        strongs: "H853 / H216",
+        form: "Object marker + definite noun",
+        grammar: "The object marker is joined to the noun by maqqef.",
+        lexiconNote:
+          "The אֶת marker identifies the definite direct object.",
+        context: "The object marker is joined to the noun by maqqef.",
+        themeTags: ["light", "syntax"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "כִּי־טוֹב",
+        transliteration: "ki-tov",
+        gloss: "that it was good",
+        root: "טוב",
+        rootTransliteration: "tov",
+        rootMeaning: "good, pleasant, fitting",
+        strongs: "H3588 / H2896",
+        form: "Particle + adjective",
+        grammar: "Evaluation clause introduced by כִּי.",
+        lexiconNote:
+          "טוֹב can refer to goodness, beauty, usefulness, or fittingness.",
+        context: "Good here means fitting, beneficial, or rightly ordered.",
+        themeTags: ["goodness", "evaluation", "order"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וַיַּבְדֵּל",
+        transliteration: "vayyavdel",
+        gloss: "and he separated",
+        root: "בדל",
+        rootTransliteration: "badal",
+        rootMeaning: "separate, divide, distinguish",
+        strongs: "H914",
+        form: "Hiphil wayyiqtol verb",
+        grammar: "Causative stem: he caused separation or made a distinction.",
+        lexiconNote:
+          "בדל is a key ordering verb in Genesis 1.",
+        context: "God creates order by making meaningful distinctions.",
+        themeTags: ["separation", "order", "creation"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אֱלֹהִים",
+        transliteration: "elohim",
+        gloss: "God",
+        root: "אלהים",
+        rootTransliteration: "elohim",
+        rootMeaning: "God, deity, mighty one",
+        strongs: "H430",
+        form: "Noun",
+        grammar: "Repeated subject after the verb.",
+        lexiconNote:
+          "The repeated subject slows the line and emphasizes divine action.",
+        context: "The repeated subject slows the line and emphasizes divine action.",
+        themeTags: ["God", "separation"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "בֵּין",
+        transliteration: "bein",
+        gloss: "between",
+        root: "בין",
+        rootTransliteration: "bein",
+        rootMeaning: "between, among",
+        strongs: "H996",
+        form: "Preposition",
+        grammar: "Often paired with a second בֵּין or וּבֵין.",
+        lexiconNote:
+          "The repeated 'between...and between...' construction is normal Hebrew style.",
+        context: "Often paired with a second בֵּין or וּבֵין.",
+        themeTags: ["separation", "syntax"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "הָאוֹר",
+        transliteration: "ha'or",
+        gloss: "the light",
+        root: "אור",
+        rootTransliteration: "or",
+        rootMeaning: "light",
+        strongs: "H216",
+        form: "Definite noun",
+        grammar: "One side of the separation.",
+        lexiconNote:
+          "The article ה marks the noun as definite: the light already created.",
+        context: "One side of the separation.",
+        themeTags: ["light", "separation"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וּבֵין",
+        transliteration: "uvein",
+        gloss: "and between",
+        root: "בין",
+        rootTransliteration: "bein",
+        rootMeaning: "between, among",
+        strongs: "H996",
+        form: "Conjunction + preposition",
+        grammar: "Completes the Hebrew 'between X and between Y' construction.",
+        lexiconNote:
+          "The prefixed ו joins the second half of the separation formula.",
+        context: "Completes the Hebrew 'between X and between Y' construction.",
+        themeTags: ["separation", "syntax"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "הַחֹשֶׁךְ",
+        transliteration: "hachoshekh",
+        gloss: "the darkness",
+        root: "חשׁך",
+        rootTransliteration: "choshekh",
+        rootMeaning: "darkness",
+        strongs: "H2822",
+        form: "Definite noun",
+        grammar: "The other side of the separation.",
+        lexiconNote:
+          "The article ה marks the darkness as the counterpart to the light.",
+        context: "The other side of the separation.",
+        themeTags: ["darkness", "separation"],
+        prompt: defaultPrompt
+      }
+    ]
   },
   {
     reference: "Genesis 1:5",
@@ -143,18 +595,183 @@ const verses = [
     context:
       "Naming completes the first ordering act. The evening-morning formula marks the first day in the chapter's repeated structure.",
     words: [
-      ["וַיִּקְרָא", "vayyiqra", "and he called", "קרא", "Wayyiqtol verb", "Naming is an act of authority and classification."],
-      ["אֱלֹהִים", "elohim", "God", "אלהים", "Noun", "God names what God has separated."],
-      ["לָאוֹר", "la'or", "to the light", "אור", "Preposition לְ + definite noun", "Hebrew says 'called to the light Day,' an idiom for naming."],
-      ["יוֹם", "yom", "day", "יום", "Noun", "Can mean daylight period or a full day depending on context."],
-      ["וְלַחֹשֶׁךְ", "velachoshekh", "and to the darkness", "חשׁך", "Conjunction + preposition + definite noun", "The second named realm."],
-      ["קָרָא", "qara", "he called", "קרא", "Qal perfect, 3rd masculine singular", "The verb order shifts, but God remains the implied subject."],
-      ["לָיְלָה", "laylah", "night", "ליל", "Noun", "The named counterpart to day."],
-      ["וַיְהִי־עֶרֶב", "vayehi-erev", "and there was evening", "היה / ערב", "Verb + noun", "The first half of the day-closing formula."],
-      ["וַיְהִי־בֹקֶר", "vayehi-voqer", "and there was morning", "היה / בקר", "Verb + noun", "The second half of the formula."],
-      ["יוֹם", "yom", "day", "יום", "Noun", "The unit being counted."],
-      ["אֶחָד", "echad", "one", "אחד", "Cardinal number", "The first counted day; later verses use ordinal-style phrasing."]
-    ].map(makeWord)
+      {
+        hebrew: "וַיִּקְרָא",
+        transliteration: "vayyiqra",
+        gloss: "and he called",
+        root: "קרא",
+        rootTransliteration: "qara",
+        rootMeaning: "call, name, proclaim",
+        strongs: "H7121",
+        form: "Wayyiqtol verb",
+        grammar: "Narrative verb introducing the naming act.",
+        lexiconNote:
+          "קרא can mean call out, summon, read, or name depending on context.",
+        context: "Naming is an act of authority and classification.",
+        themeTags: ["naming", "authority", "order"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אֱלֹהִים",
+        transliteration: "elohim",
+        gloss: "God",
+        root: "אלהים",
+        rootTransliteration: "elohim",
+        rootMeaning: "God, deity, mighty one",
+        strongs: "H430",
+        form: "Noun",
+        grammar: "Subject of the naming verb.",
+        lexiconNote:
+          "God names what God has separated.",
+        context: "God names what God has separated.",
+        themeTags: ["God", "naming"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "לָאוֹר",
+        transliteration: "la'or",
+        gloss: "to the light",
+        root: "אור",
+        rootTransliteration: "or",
+        rootMeaning: "light",
+        strongs: "H216",
+        form: "Preposition לְ + definite noun",
+        grammar: "Hebrew says 'called to the light Day,' an idiom for naming.",
+        lexiconNote:
+          "The preposition ל can introduce the thing being named.",
+        context: "Hebrew says 'called to the light Day,' an idiom for naming.",
+        themeTags: ["light", "naming", "idiom"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "יוֹם",
+        transliteration: "yom",
+        gloss: "day",
+        root: "יום",
+        rootTransliteration: "yom",
+        rootMeaning: "day, daytime",
+        strongs: "H3117",
+        form: "Noun",
+        grammar: "Name assigned to the light.",
+        lexiconNote:
+          "יוֹם can mean daylight period or a full day depending on context.",
+        context: "Can mean daylight period or a full day depending on context.",
+        themeTags: ["day", "time", "naming"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וְלַחֹשֶׁךְ",
+        transliteration: "velachoshekh",
+        gloss: "and to the darkness",
+        root: "חשׁך",
+        rootTransliteration: "choshekh",
+        rootMeaning: "darkness",
+        strongs: "H2822",
+        form: "Conjunction + preposition + definite noun",
+        grammar: "The second named realm.",
+        lexiconNote:
+          "The prefixed ו links the second naming action to the first.",
+        context: "The second named realm.",
+        themeTags: ["darkness", "naming"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "קָרָא",
+        transliteration: "qara",
+        gloss: "he called",
+        root: "קרא",
+        rootTransliteration: "qara",
+        rootMeaning: "call, name, proclaim",
+        strongs: "H7121",
+        form: "Qal perfect, 3rd masculine singular",
+        grammar: "The verb order shifts, but God remains the implied subject.",
+        lexiconNote:
+          "The repeated naming verb balances the first half of the sentence.",
+        context: "The verb order shifts, but God remains the implied subject.",
+        themeTags: ["naming", "grammar"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "לָיְלָה",
+        transliteration: "laylah",
+        gloss: "night",
+        root: "ליל",
+        rootTransliteration: "layil",
+        rootMeaning: "night",
+        strongs: "H3915",
+        form: "Noun",
+        grammar: "Name assigned to the darkness.",
+        lexiconNote:
+          "לַיְלָה names the dark period in contrast with יוֹם.",
+        context: "The named counterpart to day.",
+        themeTags: ["night", "time", "naming"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וַיְהִי־עֶרֶב",
+        transliteration: "vayehi-erev",
+        gloss: "and there was evening",
+        root: "היה / ערב",
+        rootTransliteration: "hayah / erev",
+        rootMeaning: "be / evening",
+        strongs: "H1961 / H6153",
+        form: "Verb + noun",
+        grammar: "The first half of the day-closing formula.",
+        lexiconNote:
+          "עֶרֶב refers to evening, the transition into darkness.",
+        context: "The first half of the day-closing formula.",
+        themeTags: ["evening", "time", "day formula"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "וַיְהִי־בֹקֶר",
+        transliteration: "vayehi-voqer",
+        gloss: "and there was morning",
+        root: "היה / בקר",
+        rootTransliteration: "hayah / boqer",
+        rootMeaning: "be / morning",
+        strongs: "H1961 / H1242",
+        form: "Verb + noun",
+        grammar: "The second half of the day-closing formula.",
+        lexiconNote:
+          "בֹּקֶר refers to morning, the transition into daylight.",
+        context: "The second half of the formula.",
+        themeTags: ["morning", "time", "day formula"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "יוֹם",
+        transliteration: "yom",
+        gloss: "day",
+        root: "יום",
+        rootTransliteration: "yom",
+        rootMeaning: "day, daytime",
+        strongs: "H3117",
+        form: "Noun",
+        grammar: "The unit being counted.",
+        lexiconNote:
+          "The meaning of יוֹם is guided by its immediate phrase and larger context.",
+        context: "The unit being counted.",
+        themeTags: ["day", "time", "counting"],
+        prompt: defaultPrompt
+      },
+      {
+        hebrew: "אֶחָד",
+        transliteration: "echad",
+        gloss: "one",
+        root: "אחד",
+        rootTransliteration: "echad",
+        rootMeaning: "one, single, first in count",
+        strongs: "H259",
+        form: "Cardinal number",
+        grammar: "Counts the first day.",
+        lexiconNote:
+          "אֶחָד is the basic Hebrew cardinal number 'one.'",
+        context: "The first counted day; later verses use ordinal-style phrasing.",
+        themeTags: ["counting", "day", "time"],
+        prompt: defaultPrompt
+      }
+    ]
   }
 ];
 
@@ -177,17 +794,23 @@ const selectedGrammar = document.querySelector("#selectedGrammar");
 const selectedContext = document.querySelector("#selectedContext");
 const selectedPrompt = document.querySelector("#selectedPrompt");
 
-function makeWord([hebrew, transliteration, gloss, root, form, context]) {
-  return {
-    hebrew,
-    transliteration,
-    gloss,
-    root,
-    form,
-    grammar: form,
-    context,
-    prompt: "Compare the Hebrew form with the English translation and ask what had to be added, compressed, or left untranslated."
-  };
+function displayValue(value, fallback = "Not added yet") {
+  if (Array.isArray(value)) {
+    return value.length ? value.join(", ") : fallback;
+  }
+
+  return value || fallback;
+}
+
+function formatRoot(word) {
+  const rootParts = [
+    word.root,
+    word.rootTransliteration ? `(${word.rootTransliteration})` : "",
+    word.rootMeaning ? `- ${word.rootMeaning}` : "",
+    word.strongs ? `[${word.strongs}]` : ""
+  ].filter(Boolean);
+
+  return rootParts.length ? rootParts.join(" ") : "Not added yet";
 }
 
 function renderTabs() {
@@ -232,14 +855,20 @@ function renderVerse() {
 
 function renderWord() {
   const word = verses[activeVerseIndex].words[activeWordIndex];
-  selectedHebrew.textContent = word.hebrew;
-  selectedTransliteration.textContent = word.transliteration;
-  selectedGloss.textContent = word.gloss;
-  selectedRoot.textContent = word.root;
-  selectedForm.textContent = word.form;
-  selectedGrammar.textContent = word.grammar;
-  selectedContext.textContent = word.context;
-  selectedPrompt.textContent = word.prompt;
+  const contextParts = [
+    word.lexiconNote ? `Lexicon: ${word.lexiconNote}` : "",
+    word.context,
+    word.themeTags?.length ? `Themes: ${word.themeTags.join(", ")}` : ""
+  ].filter(Boolean);
+
+  selectedHebrew.textContent = displayValue(word.hebrew);
+  selectedTransliteration.textContent = displayValue(word.transliteration, "");
+  selectedGloss.textContent = displayValue(word.gloss);
+  selectedRoot.textContent = formatRoot(word);
+  selectedForm.textContent = displayValue(word.form);
+  selectedGrammar.textContent = displayValue(word.grammar);
+  selectedContext.textContent = displayValue(contextParts.join(" "));
+  selectedPrompt.textContent = displayValue(word.prompt, defaultPrompt);
 }
 
 function render() {

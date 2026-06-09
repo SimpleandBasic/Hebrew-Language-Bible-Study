@@ -101,7 +101,8 @@ Small speaker buttons use the browser's built-in Web Speech API to read Hebrew a
 
 - The selected-word speaker reads the currently selected Hebrew word.
 - The whole-verse speaker reads the full active Hebrew verse.
-- Google Translate remains available as a backup audio helper.
+- If no browser Hebrew voice is found, the speaker buttons open Google Translate as the backup audio helper.
+- Google Translate also remains available through the dedicated helper buttons.
 
 If browser speech is not supported, the speaker buttons are disabled and the app shows a browser-audio unavailable message.
 

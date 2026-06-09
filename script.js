@@ -887,20 +887,63 @@ function getHebrewVerse(verse) {
   return verse.words.map((word) => word.hebrew).join(" ");
 }
 
-function speakHebrew(text) {
+function getSpeechVoices() {
+  if (!speechSupported || typeof window.speechSynthesis.getVoices !== "function") {
+    return [];
+  }
+
+  return window.speechSynthesis.getVoices();
+}
+
+function getHebrewVoice() {
+  return getSpeechVoices().find((voice) => {
+    const language = voice.lang?.toLowerCase() || "";
+    const name = voice.name?.toLowerCase() || "";
+    return language.startsWith("he") || name.includes("hebrew");
+  });
+}
+
+function openAudioFallback(url) {
+  if (url) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+function speakHebrew(text, fallbackUrl = "") {
   if (!speechSupported || !text) {
     audioHelperNote.textContent = "Browser audio is not available here. Google Translate is available as a backup audio helper.";
+    openAudioFallback(fallbackUrl);
+    return;
+  }
+
+  const hebrewVoice = getHebrewVoice();
+  if (!hebrewVoice) {
+    audioHelperNote.textContent = "No browser Hebrew voice was found. Opening Google Translate as the backup audio helper.";
+    openAudioFallback(fallbackUrl);
     return;
   }
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "he-IL";
+  utterance.lang = hebrewVoice.lang || "he-IL";
+  utterance.voice = hebrewVoice;
+  utterance.rate = 0.9;
+  utterance.onerror = () => {
+    audioHelperNote.textContent = "Browser audio could not play this Hebrew text. Opening Google Translate as the backup audio helper.";
+    openAudioFallback(fallbackUrl);
+  };
+
   window.speechSynthesis.speak(utterance);
+  window.speechSynthesis.resume?.();
 }
 
 function setSpeechAvailability() {
   if (speechSupported) {
+    speakWholeVerseButton.disabled = false;
+    speakSelectedWordButton.disabled = false;
+    audioHelperNote.textContent = getHebrewVoice()
+      ? "Audio uses your browser's Hebrew voice. Google Translate is available as a backup audio helper."
+      : "No browser Hebrew voice is loaded yet. The speaker buttons will use Google Translate as the backup audio helper.";
     return;
   }
 
@@ -1029,11 +1072,11 @@ hearWholeVerseButton.addEventListener("click", () => {
 });
 
 speakWholeVerseButton.addEventListener("click", () => {
-  speakHebrew(speakWholeVerseButton.dataset.text);
+  speakHebrew(speakWholeVerseButton.dataset.text, hearWholeVerseButton.dataset.url);
 });
 
 speakSelectedWordButton.addEventListener("click", () => {
-  speakHebrew(speakSelectedWordButton.dataset.text);
+  speakHebrew(speakSelectedWordButton.dataset.text, googleTranslateButton.dataset.url);
 });
 
 aboutSourcesButton.addEventListener("click", () => {
@@ -1045,3 +1088,8 @@ aboutSourcesButton.addEventListener("click", () => {
 
 render();
 setSpeechAvailability();
+
+if (speechSupported) {
+  window.speechSynthesis.addEventListener?.("voiceschanged", setSpeechAvailability);
+  window.speechSynthesis.onvoiceschanged = setSpeechAvailability;
+}

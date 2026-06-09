@@ -15,6 +15,10 @@ Open `index.html` in a browser. Click a Hebrew word to see:
 
 The app currently includes Genesis 1:1-5 with word-level notes.
 
+## Layout
+
+On desktop, the verse reader appears on the left and the selected word details appear on the right. On mobile, the layout stacks with the Hebrew Word Study verse reader first and the selected word details below it.
+
 ## Publish with GitHub Pages
 
 This app is ready to publish as a static GitHub Pages site because `index.html`, `styles.css`, and `script.js` are in the repository root and use relative file links.

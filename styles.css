@@ -431,8 +431,12 @@ dd {
     grid-template-columns: 1fr;
   }
 
+  .reader {
+    order: 1;
+  }
+
   .detail-panel {
-    order: -1;
+    order: 2;
   }
 
   .selected-word {

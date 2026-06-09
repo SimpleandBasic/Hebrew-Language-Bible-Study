@@ -12,6 +12,7 @@ const verses = [
         hebrew: "בְּרֵאשִׁית",
         transliteration: "bereshit",
         gloss: "in beginning, at first",
+        pronunciation: "buh-ray-SHEET",
         root: "רֹאשׁ",
         rootTransliteration: "rosh",
         rootMeaning: "head, beginning, first part",
@@ -788,6 +789,7 @@ const verseContext = document.querySelector("#verseContext");
 const selectedHebrew = document.querySelector("#selectedHebrew");
 const selectedTransliteration = document.querySelector("#selectedTransliteration");
 const selectedGloss = document.querySelector("#selectedGloss");
+const selectedPronunciation = document.querySelector("#selectedPronunciation");
 const selectedRoot = document.querySelector("#selectedRoot");
 const selectedStrongs = document.querySelector("#selectedStrongs");
 const selectedForm = document.querySelector("#selectedForm");
@@ -795,6 +797,7 @@ const selectedGrammar = document.querySelector("#selectedGrammar");
 const selectedContext = document.querySelector("#selectedContext");
 const selectedPrompt = document.querySelector("#selectedPrompt");
 const blueLetterBibleButton = document.querySelector("#blueLetterBibleButton");
+const googleTranslateButton = document.querySelector("#googleTranslateButton");
 
 function displayValue(value, fallback = "Not added yet") {
   if (Array.isArray(value)) {
@@ -823,6 +826,10 @@ function getBlueLetterBibleUrl(strongs) {
   return primaryStrongs
     ? `https://www.blueletterbible.org/lexicon/${primaryStrongs.toLowerCase()}/kjv/wlc/0-1/`
     : "";
+}
+
+function getGoogleTranslateUrl(hebrew) {
+  return `https://translate.google.com/?sl=iw&tl=en&text=${encodeURIComponent(hebrew)}&op=translate`;
 }
 
 function renderTabs() {
@@ -876,6 +883,7 @@ function renderWord() {
   selectedHebrew.textContent = displayValue(word.hebrew);
   selectedTransliteration.textContent = displayValue(word.transliteration, "");
   selectedGloss.textContent = displayValue(word.gloss);
+  selectedPronunciation.textContent = displayValue(word.pronunciation, "Pronunciation coming soon");
   selectedRoot.textContent = formatRoot(word);
   selectedStrongs.textContent = displayValue(word.strongs);
   selectedForm.textContent = displayValue(word.form);
@@ -889,6 +897,8 @@ function renderWord() {
   blueLetterBibleButton.textContent = blueLetterBibleUrl
     ? "Open in Blue Letter Bible"
     : "No Blue Letter Bible link yet";
+
+  googleTranslateButton.dataset.url = getGoogleTranslateUrl(word.hebrew);
 }
 
 function render() {
@@ -919,6 +929,13 @@ document.querySelector("#copyWord").addEventListener("click", async () => {
 
 blueLetterBibleButton.addEventListener("click", () => {
   const url = blueLetterBibleButton.dataset.url;
+  if (url) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+});
+
+googleTranslateButton.addEventListener("click", () => {
+  const url = googleTranslateButton.dataset.url;
   if (url) {
     window.open(url, "_blank", "noopener,noreferrer");
   }

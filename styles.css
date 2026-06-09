@@ -287,6 +287,25 @@ dd {
   cursor: not-allowed;
 }
 
+.secondary-action {
+  margin-top: -8px;
+  background: #fffaf1;
+  color: var(--accent-strong);
+}
+
+.secondary-action:hover,
+.secondary-action:focus-visible {
+  background: rgba(47, 118, 109, 0.1);
+  color: var(--accent-strong);
+}
+
+.helper-note {
+  margin: -12px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
 .detail-section {
   padding-top: 4px;
 }

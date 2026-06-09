@@ -6,6 +6,7 @@ Open `index.html` in a browser. Click a Hebrew word to see:
 
 - English gloss
 - Transliteration
+- Beginner-friendly pronunciation help
 - Hebrew root
 - Form and grammar
 - Context notes
@@ -32,6 +33,30 @@ https://www.blueletterbible.org/lexicon/h7225/kjv/wlc/0-1/
 
 If a word does not have a Strong's number yet, the button is disabled.
 
+## Pronunciation Help
+
+Each word can include a beginner-friendly `pronunciation` field. This is a simple reading aid, not a technical pronunciation system.
+
+Example:
+
+```js
+pronunciation: "buh-ray-SHEET"
+```
+
+If a word does not have a pronunciation value yet, the detail panel shows:
+
+```text
+Pronunciation coming soon
+```
+
+The **Hear in Google Translate** button opens the selected Hebrew word in Google Translate:
+
+```text
+https://translate.google.com/?sl=iw&tl=en&text={encoded-hebrew-word}&op=translate
+```
+
+This is included as a helpful modern Hebrew audio reference. It should not be treated as a full Biblical Hebrew pronunciation system.
+
 ## Data Structure
 
 Verse and word data live in the `verses` array in `script.js`.
@@ -56,6 +81,7 @@ Each Hebrew word should use one consistent object format:
   hebrew: "בְּרֵאשִׁית",
   transliteration: "bereshit",
   gloss: "in beginning, at first",
+  pronunciation: "buh-ray-SHEET",
   root: "רֹאשׁ",
   rootTransliteration: "rosh",
   rootMeaning: "head, beginning, first part",
@@ -90,6 +116,7 @@ Example:
       hebrew: "וַיֹּאמֶר",
       transliteration: "vayomer",
       gloss: "and he said",
+      pronunciation: "vah-YOH-mer",
       root: "אמר",
       rootTransliteration: "amar",
       rootMeaning: "say, speak",
@@ -112,6 +139,7 @@ Add a new object inside a verse's `words` array. Keep the same field names every
 - `hebrew`
 - `transliteration`
 - `gloss`
+- `pronunciation`
 - `root`
 - `rootTransliteration`
 - `rootMeaning`

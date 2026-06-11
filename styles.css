@@ -63,6 +63,49 @@ button {
   border-bottom: 1px solid var(--line);
 }
 
+.project-menu {
+  margin-bottom: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-menu-title {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.project-link {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: #fffaf1;
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.project-link:hover,
+.project-link:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(47, 118, 109, 0.24);
+  outline-offset: 2px;
+}
+
+.project-link.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--accent-strong);
@@ -466,6 +509,15 @@ dd {
 
   .reader-header {
     flex-direction: column;
+  }
+
+  .project-menu {
+    width: 100%;
+  }
+
+  .project-link {
+    flex: 1 1 150px;
+    justify-content: center;
   }
 
   .chapter-tools {

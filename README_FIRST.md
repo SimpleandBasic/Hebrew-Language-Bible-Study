@@ -1,25 +1,27 @@
 # Hebrew Supabase Patch
 
-This folder is an overlay for the repository:
+This patch adds the shared Supabase backend foundation to:
 
 `SimpleandBasic/Hebrew-Language-Bible-Study`
 
-It adds the shared Supabase backend foundation while preserving the current Genesis 1:1–5 data as a working fallback.
+The current Genesis 1:1–5 data remains in `script.js` as a working fallback, so the reader still works before Supabase is configured.
 
-## Files to copy into the repository
+## Included files
 
-Copy every file and folder in this package into the repository root. Allow `index.html` to replace the existing file. No change to `script.js` is required.
+- `index.html`
+- `supabase-config.js`
+- `data-loader.js`
+- `SUPABASE_SETUP.md`
+- `supabase/hebrew-learning-schema.sql`
+- `supabase/import-genesis.js`
+- `.github/workflows/seed-hebrew-supabase.yml`
 
-After copying, run:
+No change to `script.js` is required.
 
-```powershell
-git add index.html supabase-config.js data-loader.js SUPABASE_SETUP.md supabase .github/workflows/seed-hebrew-supabase.yml
-git commit -m "Add shared Supabase backend for Hebrew study"
-git push origin main
-```
+## Next step
 
-Then follow `SUPABASE_SETUP.md`.
+Follow `SUPABASE_SETUP.md` after these files are merged into `main`.
 
 ## Safety
 
-The app still works from local data before Supabase is configured. The service-role key belongs only in GitHub Actions secrets and never in `supabase-config.js`.
+Only the public publishable key belongs in `supabase-config.js`. The private `sb_secret_` key belongs only in GitHub Actions repository secrets and must never be committed to the repository.

@@ -16,7 +16,7 @@ The SQL is rerunnable. It only creates or updates objects beginning with `hebrew
 
 ## 2. Store the private import credentials in GitHub
 
-The importer needs the service-role key, but that key must never appear in frontend code.
+The importer should use a current Supabase secret key. That key must never appear in frontend code.
 
 In this GitHub repository:
 
@@ -24,7 +24,9 @@ In this GitHub repository:
 2. Open **Secrets and variables**.
 3. Choose **Actions**.
 4. Create a repository secret named `SUPABASE_URL` containing the project URL.
-5. Create a repository secret named `SUPABASE_SERVICE_ROLE_KEY` containing the service-role key.
+5. Create a repository secret named `SUPABASE_SECRET_KEY` containing a Supabase secret key beginning with `sb_secret_`.
+
+The importer also supports the legacy `SUPABASE_SERVICE_ROLE_KEY` name when a project still uses the older service-role JWT.
 
 ## 3. Import the existing Genesis study data
 
@@ -44,12 +46,12 @@ Open `supabase-config.js` and fill in:
 ```js
 window.HEBREW_SUPABASE_CONFIG = Object.freeze({
   url: "YOUR_SUPABASE_PROJECT_URL",
-  anonKey: "YOUR_PUBLIC_ANON_OR_PUBLISHABLE_KEY",
+  publicKey: "YOUR_PUBLIC_PUBLISHABLE_KEY",
   minimumVerseCount: 5
 });
 ```
 
-Use only the public anon or publishable key here. Never use the service-role key.
+Use only a publishable key beginning with `sb_publishable_` in this public file. The legacy public anon key also works. Never use the secret key here.
 
 After the GitHub Pages deployment refreshes, the app status line should say:
 
@@ -77,4 +79,4 @@ If configuration, networking, or database content is incomplete, the app continu
 - Public visitors may read published Hebrew study content.
 - Public visitors cannot edit the master Hebrew content.
 - Authenticated users may only access their own progress, reviews, and RPG state.
-- The service-role key is used only by the protected GitHub Action.
+- The secret key is used only by the protected GitHub Action.

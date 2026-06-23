@@ -5,10 +5,15 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/\/$/, "");
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const adminKey =
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "";
 
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.");
+if (!supabaseUrl || !adminKey) {
+  throw new Error(
+    "SUPABASE_URL and SUPABASE_SECRET_KEY are required. The legacy SUPABASE_SERVICE_ROLE_KEY is also supported."
+  );
 }
 
 function readLocalVerses() {
@@ -32,15 +37,26 @@ function readLocalVerses() {
   return parsed;
 }
 
+function getAdminHeaders(prefer) {
+  const headers = {
+    apikey: adminKey,
+    "Content-Type": "application/json",
+    ...(prefer ? { Prefer: prefer } : {})
+  };
+
+  // Legacy service-role keys are JWTs and require the Authorization header.
+  // Current sb_secret_ keys use the apikey header only.
+  if (adminKey.startsWith("eyJ")) {
+    headers.Authorization = `Bearer ${adminKey}`;
+  }
+
+  return headers;
+}
+
 async function supabaseRequest(route, { method = "GET", body, prefer } = {}) {
   const response = await fetch(`${supabaseUrl}/rest/v1/${route}`, {
     method,
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      "Content-Type": "application/json",
-      ...(prefer ? { Prefer: prefer } : {})
-    },
+    headers: getAdminHeaders(prefer),
     ...(body === undefined ? {} : { body: JSON.stringify(body) })
   });
 
@@ -56,7 +72,11 @@ async function supabaseRequest(route, { method = "GET", body, prefer } = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(`${method} ${route} failed (${response.status}): ${typeof payload === "string" ? payload : JSON.stringify(payload)}`);
+    throw new Error(
+      `${method} ${route} failed (${response.status}): ${
+        typeof payload === "string" ? payload : JSON.stringify(payload)
+      }`
+    );
   }
 
   return payload;

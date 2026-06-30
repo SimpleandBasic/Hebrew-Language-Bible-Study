@@ -1,0 +1,16 @@
+{
+  "name": "hebrew-language-bible-study",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "GitHub Pages Hebrew viewer with a Vercel-hosted MCP connector for safe lesson publishing.",
+  "scripts": {
+    "check": "node scripts/check-all.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "latest"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

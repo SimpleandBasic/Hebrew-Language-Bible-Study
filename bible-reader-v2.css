@@ -66,7 +66,11 @@
 }
 
 .bible-reader-home.hide-transliteration .transliteration-line,
-.bible-reader-home.hide-english .english-line {
+.bible-reader-home.hide-transliteration .practice-transliteration-label,
+.bible-reader-home.hide-transliteration .practice-phrase-transliteration,
+.bible-reader-home.hide-english .english-line,
+.bible-reader-home.hide-english .practice-english-label,
+.bible-reader-home.hide-english .practice-phrase-english {
   display: none;
 }
 
@@ -74,9 +78,7 @@
   margin: 0 30px 24px;
   padding: 18px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 16px;
-  align-items: center;
   border: 1px solid var(--line);
   background: #fff7e9;
 }
@@ -100,11 +102,71 @@
   line-height: 1.5;
 }
 
+.practice-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.practice-phrase-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid rgba(47, 118, 109, 0.2);
+  border-radius: 20px;
+  background: rgba(255, 253, 250, 0.86);
+  box-shadow: 0 12px 28px rgba(89, 61, 40, 0.08);
+}
+
+.practice-phrase-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  color: var(--accent-strong);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.practice-phrase-hebrew {
+  color: var(--ink);
+  font-family: "Times New Roman", "Noto Serif Hebrew", serif;
+  font-size: clamp(2rem, 8vw, 3.35rem);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.practice-phrase-transliteration {
+  color: var(--clay);
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+  font-weight: 850;
+}
+
+.practice-phrase-english {
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
 .practice-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 8px;
+}
+
+.phrase-actions {
+  justify-content: flex-start;
+}
+
+.visibility-actions {
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid rgba(128, 96, 64, 0.14);
+}
+
+.practice-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .word-study-panel .detail-heading h2 {
@@ -120,6 +182,10 @@
 .word-token {
   border-bottom: 3px solid rgba(47, 118, 109, 0.18);
   border-radius: 12px;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .word-token::after {
@@ -128,16 +194,29 @@
   height: 2px;
 }
 
+.word-token.phrase-spoken {
+  background: rgba(47, 118, 109, 0.08);
+}
+
+.word-token.phrase-active {
+  background: rgba(216, 151, 63, 0.22);
+  box-shadow: 0 0 0 3px rgba(216, 151, 63, 0.22);
+  transform: translateY(-1px);
+}
+
+.word-token.phrase-active.active {
+  box-shadow:
+    0 0 0 3px rgba(216, 151, 63, 0.26),
+    0 0 0 6px rgba(47, 118, 109, 0.13);
+}
+
 @media (max-width: 880px) {
   .reader-shell {
     grid-template-columns: 1fr;
   }
 
-  .practice-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .practice-actions {
+  .practice-actions,
+  .visibility-actions {
     justify-content: flex-start;
   }
 }
@@ -154,7 +233,9 @@
   }
 
   .chapter-tools .source-toggle-button,
-  .chapter-tools .verse-audio-button {
-    flex: 1 1 92px;
+  .chapter-tools .verse-audio-button,
+  .practice-actions .source-toggle-button,
+  .practice-actions .verse-audio-button {
+    flex: 1 1 132px;
   }
 }

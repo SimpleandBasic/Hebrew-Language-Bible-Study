@@ -1,25 +1,174 @@
+.reader-focus-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  align-items: center;
+  backdrop-filter: blur(18px);
+}
+
+.reader-focus-topbar h1 {
+  font-size: clamp(1.6rem, 5vw, 3rem);
+}
+
+.reader-menu-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.reader-menu-button:hover,
+.reader-menu-button:focus-visible {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  outline: 2px solid rgba(47, 118, 109, 0.24);
+  outline-offset: 2px;
+}
+
+.reader-menu-overlay[hidden],
+.word-study-scrim[hidden],
+.word-study-panel[hidden],
+.practice-panel[hidden] {
+  display: none !important;
+}
+
+.reader-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  justify-content: end;
+}
+
+.reader-menu-backdrop,
+.word-study-scrim {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: rgba(25, 24, 21, 0.34);
+}
+
+.reader-menu-drawer {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 92vw);
+  height: 100vh;
+  overflow-y: auto;
+  padding: 22px;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  background: rgba(255, 253, 250, 0.98);
+  border-left: 1px solid var(--line);
+  box-shadow: -18px 0 45px rgba(31, 27, 20, 0.18);
+}
+
+.reader-menu-heading,
+.practice-sheet-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.reader-menu-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.35rem, 5vw, 2.1rem);
+  line-height: 1.05;
+}
+
+.reader-menu-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: #fffaf1;
+}
+
+.reader-menu-label {
+  margin: 0;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reader-drawer-nav,
+.reader-menu-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.reader-menu-grid.chapter-tools {
+  justify-content: stretch;
+}
+
+.reader-menu-grid .icon-button,
+.reader-menu-grid .speaker-button,
+.reader-drawer-nav .unified-nav-button,
+.reader-menu-grid .source-toggle-button,
+.reader-menu-grid .verse-audio-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.drawer-sources-panel {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: #fff7e9;
+}
+
+.drawer-sources-panel .sources-grid {
+  grid-template-columns: 1fr;
+}
+
 .reader-shell {
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  width: min(100%, 1180px);
+  min-height: calc(100vh - 104px);
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 10px;
+}
+
+.reader {
+  min-height: calc(100vh - 124px);
+  overflow: hidden;
 }
 
 .bible-reader-header {
   background:
-    linear-gradient(135deg, rgba(47, 118, 109, 0.12), transparent 52%),
+    linear-gradient(135deg, rgba(47, 118, 109, 0.08), transparent 52%),
     rgba(255, 253, 250, 0.96);
 }
 
+.reader-focus-header {
+  padding: 18px 30px 14px;
+}
+
+.reader-focus-header .section-title-large {
+  font-size: clamp(1.8rem, 4vw, 3.3rem);
+}
+
 .reader-subtitle {
-  max-width: 620px;
-  margin: 10px 0 0;
+  max-width: 680px;
+  margin: 8px 0 0;
   color: var(--muted);
-  font-size: 1.02rem;
+  font-size: 1rem;
   font-weight: 650;
   line-height: 1.5;
 }
 
 .reader-status {
   margin: 0;
-  padding: 10px 30px;
+  padding: 8px 30px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 250, 241, 0.8);
 }
@@ -34,35 +183,101 @@
   font-weight: 750;
 }
 
-.reader-lines {
-  display: grid;
-  gap: 10px;
-}
-
-.line-label {
-  color: var(--gold);
-  font-size: 0.78rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.verse-tabs {
+  justify-content: center;
+  background: rgba(255, 253, 250, 0.78);
 }
 
 .bible-verse-card {
+  min-height: clamp(420px, 58vh, 720px);
+  display: grid;
+  align-content: center;
   background:
-    linear-gradient(180deg, rgba(255, 250, 241, 0.74), rgba(255, 253, 250, 0.96));
+    radial-gradient(circle at top, rgba(255, 250, 241, 0.92), transparent 42%),
+    linear-gradient(180deg, rgba(255, 250, 241, 0.74), rgba(255, 253, 250, 0.98));
 }
 
 .bible-verse-card.is-practiced {
   border-left: 6px solid var(--accent);
 }
 
+.verse-meta {
+  margin-bottom: 22px;
+}
+
+.reader-lines {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.line-label {
+  margin-top: 6px;
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hebrew-line {
+  width: 100%;
+  margin: 12px 0 8px;
+  justify-content: center;
+  gap: clamp(8px, 2.4vw, 18px);
+  font-size: clamp(3rem, 10vw, 6.8rem);
+  line-height: 1.35;
+  text-align: center;
+}
+
+.word-token {
+  min-height: clamp(72px, 13vw, 128px);
+  border-bottom: 3px solid rgba(47, 118, 109, 0.18);
+  border-radius: 16px;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.word-token::after {
+  content: "";
+  display: block;
+  height: 2px;
+}
+
+.word-token.phrase-spoken {
+  background: rgba(47, 118, 109, 0.08);
+}
+
+.word-token.phrase-active {
+  background: rgba(216, 151, 63, 0.22);
+  box-shadow: 0 0 0 3px rgba(216, 151, 63, 0.22);
+  transform: translateY(-1px);
+}
+
+.word-token.phrase-active.active {
+  box-shadow:
+    0 0 0 3px rgba(216, 151, 63, 0.26),
+    0 0 0 6px rgba(47, 118, 109, 0.13);
+}
+
 .transliteration-line {
-  max-width: 860px;
-  margin: 0 0 10px;
+  max-width: 900px;
+  margin: 0;
   color: var(--clay);
-  font-size: clamp(1.25rem, 3vw, 1.85rem);
+  font-size: clamp(1.28rem, 3vw, 2rem);
   font-weight: 800;
   line-height: 1.45;
+}
+
+.english-line {
+  max-width: 760px;
+  margin: 0;
+  color: #37332e;
+  font-size: clamp(1rem, 2.4vw, 1.28rem);
+  line-height: 1.65;
 }
 
 .bible-reader-home.hide-transliteration .transliteration-line,
@@ -75,16 +290,21 @@
 }
 
 .practice-panel {
-  margin: 0 30px 24px;
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  z-index: 70;
+  width: min(920px, calc(100vw - 28px));
+  max-height: min(82vh, 760px);
+  overflow-y: auto;
   padding: 18px;
   display: grid;
   gap: 16px;
   border: 1px solid var(--line);
-  background: #fff7e9;
-}
-
-.practice-panel[hidden] {
-  display: none !important;
+  border-radius: 28px;
+  background: rgba(255, 247, 233, 0.98);
+  box-shadow: 0 22px 70px rgba(31, 27, 20, 0.22);
+  transform: translateX(-50%);
 }
 
 .practice-panel h2,
@@ -113,7 +333,7 @@
   padding: 16px;
   border: 1px solid rgba(47, 118, 109, 0.2);
   border-radius: 20px;
-  background: rgba(255, 253, 250, 0.86);
+  background: rgba(255, 253, 250, 0.9);
   box-shadow: 0 12px 28px rgba(89, 61, 40, 0.08);
 }
 
@@ -158,15 +378,28 @@
   justify-content: flex-start;
 }
 
-.visibility-actions {
-  justify-content: flex-end;
-  padding-top: 4px;
-  border-top: 1px solid rgba(128, 96, 64, 0.14);
-}
-
 .practice-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.word-study-scrim {
+  z-index: 88;
+}
+
+.word-study-panel {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 90;
+  width: min(760px, calc(100vw - 28px));
+  max-height: min(88vh, 780px);
+  overflow-y: auto;
+  padding: 22px;
+  border-radius: 30px;
+  background: rgba(255, 253, 250, 0.98);
+  box-shadow: 0 22px 75px rgba(31, 27, 20, 0.25);
+  transform: translateX(-50%);
 }
 
 .word-study-panel .detail-heading h2 {
@@ -175,39 +408,23 @@
   font-size: 1.25rem;
 }
 
+.word-study-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .word-study-panel .word-facts div:last-child {
   border-bottom: 0;
 }
 
-.word-token {
-  border-bottom: 3px solid rgba(47, 118, 109, 0.18);
-  border-radius: 12px;
-  transition:
-    background 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+.notes-band {
+  background: rgba(245, 235, 219, 0.35);
 }
 
-.word-token::after {
-  content: "";
-  display: block;
-  height: 2px;
-}
-
-.word-token.phrase-spoken {
-  background: rgba(47, 118, 109, 0.08);
-}
-
-.word-token.phrase-active {
-  background: rgba(216, 151, 63, 0.22);
-  box-shadow: 0 0 0 3px rgba(216, 151, 63, 0.22);
-  transform: translateY(-1px);
-}
-
-.word-token.phrase-active.active {
-  box-shadow:
-    0 0 0 3px rgba(216, 151, 63, 0.26),
-    0 0 0 6px rgba(47, 118, 109, 0.13);
+body.reader-menu-open,
+body.word-study-open,
+body.practice-sheet-open {
+  overflow: hidden;
 }
 
 @media (max-width: 880px) {
@@ -215,27 +432,69 @@
     grid-template-columns: 1fr;
   }
 
-  .practice-actions,
-  .visibility-actions {
+  .practice-actions {
     justify-content: flex-start;
+  }
+
+  .reader-focus-topbar {
+    width: min(100vw - 20px, 1180px);
+    margin-top: 10px;
   }
 }
 
 @media (max-width: 560px) {
+  .reader-shell {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+  }
+
+  .reader-focus-header,
   .reader-status {
     padding-left: 18px;
     padding-right: 18px;
   }
 
-  .practice-panel {
-    margin-left: 18px;
-    margin-right: 18px;
+  .reader-focus-header {
+    padding-top: 14px;
   }
 
-  .chapter-tools .source-toggle-button,
-  .chapter-tools .verse-audio-button,
+  .reader-subtitle {
+    font-size: 0.92rem;
+  }
+
+  .hebrew-line {
+    gap: 8px;
+    font-size: clamp(2.8rem, 15vw, 4.7rem);
+  }
+
+  .word-token {
+    min-height: 68px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .practice-panel {
+    bottom: 8px;
+    width: calc(100vw - 16px);
+    padding: 14px;
+    border-radius: 22px;
+  }
+
   .practice-actions .source-toggle-button,
   .practice-actions .verse-audio-button {
     flex: 1 1 132px;
+  }
+
+  .word-study-panel {
+    bottom: 8px;
+    width: calc(100vw - 16px);
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .reader-menu-drawer {
+    width: min(360px, 94vw);
+    padding: 18px;
   }
 }

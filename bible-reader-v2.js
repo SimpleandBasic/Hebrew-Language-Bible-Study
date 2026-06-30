@@ -7,6 +7,13 @@
   const selectedMemoryClue = document.querySelector("#selectedMemoryClue");
   const reader = document.querySelector(".bible-reader-home");
   const verseCard = document.querySelector(".bible-verse-card");
+  const readerMenuToggle = document.querySelector("#readerMenuToggle");
+  const readerMenuOverlay = document.querySelector("#readerMenuOverlay");
+  const readerMenuClose = document.querySelector("#readerMenuClose");
+  const wordStudyPanel = document.querySelector("#wordStudyPanel");
+  const wordStudyScrim = document.querySelector("#wordStudyScrim");
+  const closeWordStudy = document.querySelector("#closeWordStudy");
+  const hebrewLineElement = document.querySelector("#hebrewLine");
 
   const practiceState = {
     open: false,
@@ -72,6 +79,35 @@
     }
   }
 
+  function openReaderMenu() {
+    if (!readerMenuOverlay) return;
+    readerMenuOverlay.hidden = false;
+    document.body.classList.add("reader-menu-open");
+    readerMenuToggle?.setAttribute("aria-expanded", "true");
+    readerMenuClose?.focus();
+  }
+
+  function closeReaderMenu() {
+    if (!readerMenuOverlay) return;
+    readerMenuOverlay.hidden = true;
+    document.body.classList.remove("reader-menu-open");
+    readerMenuToggle?.setAttribute("aria-expanded", "false");
+  }
+
+  function openWordStudyOverlay() {
+    if (!wordStudyPanel) return;
+    wordStudyPanel.hidden = false;
+    if (wordStudyScrim) wordStudyScrim.hidden = false;
+    document.body.classList.add("word-study-open");
+  }
+
+  function closeWordStudyOverlay() {
+    if (!wordStudyPanel) return;
+    wordStudyPanel.hidden = true;
+    if (wordStudyScrim) wordStudyScrim.hidden = true;
+    document.body.classList.remove("word-study-open");
+  }
+
   function createPhraseChunks(verse) {
     const words = verse?.words || [];
     if (!words.length) return [];
@@ -125,10 +161,13 @@
     if (!practicePanel || practicePanel.querySelector("#practicePhraseHebrew")) return;
 
     practicePanel.innerHTML = `
-      <div class="practice-copy">
-        <p class="eyebrow">Practice Mode</p>
-        <h2 id="practiceVerseReference">Genesis 1:1</h2>
-        <p id="practiceStatus">Listen once, read out loud, then repeat slowly.</p>
+      <div class="practice-sheet-heading">
+        <div class="practice-copy">
+          <p class="eyebrow">Practice Mode</p>
+          <h2 id="practiceVerseReference">Genesis 1:1</h2>
+          <p id="practiceStatus">Listen once, read out loud, then repeat slowly.</p>
+        </div>
+        <button class="icon-button" id="closePracticePanel" type="button" data-practice-action="close" aria-label="Close practice mode">×</button>
       </div>
       <div class="practice-phrase-card" aria-live="polite">
         <div class="practice-phrase-meta">
@@ -150,16 +189,15 @@
         <button class="verse-audio-button" id="markPhraseSpokenButton" type="button" data-practice-action="mark">Mark Phrase Spoken</button>
         <button class="source-toggle-button" id="nextPhraseButton" type="button" data-practice-action="next">Next Phrase</button>
       </div>
-      <div class="practice-actions visibility-actions" aria-label="Practice visibility controls">
-        <button class="source-toggle-button" id="hideTransliterationButton" type="button" data-practice-action="hide-transliteration" aria-pressed="false">Hide Transliteration</button>
-        <button class="source-toggle-button" id="hideEnglishButton" type="button" data-practice-action="hide-english" aria-pressed="false">Hide English</button>
-        <button class="source-toggle-button" id="markPracticedButton" type="button" data-practice-action="mark-verse">Mark Verse Practiced</button>
-      </div>
     `;
   }
 
   function practiceElement(id) {
     return practicePanel?.querySelector(`#${id}`);
+  }
+
+  function controlElement(id) {
+    return document.querySelector(`#${id}`);
   }
 
   function setPhraseSpoken(verse, phraseIndex) {
@@ -218,9 +256,9 @@
     const slowPhraseButton = practiceElement("slowPhraseButton");
     const repeatPhraseControlButton = practiceElement("repeatPhraseButton");
     const markPhraseSpokenButton = practiceElement("markPhraseSpokenButton");
-    const hideTransliterationButton = practiceElement("hideTransliterationButton");
-    const hideEnglishButton = practiceElement("hideEnglishButton");
-    const markPracticedButton = practiceElement("markPracticedButton");
+    const hideTransliterationButton = controlElement("hideTransliterationButton");
+    const hideEnglishButton = controlElement("hideEnglishButton");
+    const markPracticedButton = controlElement("markPracticedButton");
 
     if (practiceVerseReference) practiceVerseReference.textContent = reference;
     if (practicePhraseNumber) {
@@ -272,8 +310,12 @@
       markPracticedButton.setAttribute("aria-pressed", String(practiced));
     }
 
-    if (practiceVerseButton) practiceVerseButton.setAttribute("aria-expanded", String(practiceState.open));
+    if (practiceVerseButton) {
+      practiceVerseButton.textContent = practiceState.open ? "Close Practice" : "Open Practice";
+      practiceVerseButton.setAttribute("aria-expanded", String(practiceState.open));
+    }
     if (practicePanel) practicePanel.hidden = !practiceState.open;
+    document.body.classList.toggle("practice-sheet-open", practiceState.open);
     verseCard?.classList.toggle("is-practiced", practiced);
     reader?.classList.toggle("hide-english", practiceState.hideEnglish);
     reader?.classList.toggle("hide-transliteration", practiceState.hideTransliteration);
@@ -366,32 +408,7 @@
     renderWord();
   }
 
-  const originalRenderVerse = renderVerse;
-  renderVerse = function renderVerseWithBibleReader() {
-    originalRenderVerse();
-    updateReaderLines();
-  };
-
-  const originalRenderWord = renderWord;
-  renderWord = function renderWordWithMemoryClue() {
-    originalRenderWord();
-    updateWordStudy();
-  };
-
-  slowVerseButton?.addEventListener("click", () => speakReaderVerse({ rate: 0.68, label: "Playing slowly" }));
-  repeatVerseButton?.addEventListener("click", () => speakReaderVerse({ rate: 0.82, repeat: 2, label: "Repeating Hebrew" }));
-
-  practiceVerseButton?.addEventListener("click", () => {
-    practiceState.open = !practiceState.open;
-    ensurePracticeReference();
-    updatePracticeUi();
-  });
-
-  practicePanel?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-practice-action]");
-    if (!button) return;
-
-    const action = button.dataset.practiceAction;
+  function handlePracticeAction(action) {
     if (action === "previous") moveToPhrase(practiceState.activePhraseIndex - 1);
     if (action === "next") moveToPhrase(practiceState.activePhraseIndex + 1);
     if (action === "play") speakActivePhrase({ rate: 0.9, label: "Playing phrase" });
@@ -411,6 +428,63 @@
     }
     if (action === "hide-english") {
       practiceState.hideEnglish = !practiceState.hideEnglish;
+      updatePracticeUi();
+    }
+    if (action === "close") {
+      practiceState.open = false;
+      updatePracticeUi();
+    }
+  }
+
+  const originalRenderVerse = renderVerse;
+  renderVerse = function renderVerseWithBibleReader() {
+    originalRenderVerse();
+    updateReaderLines();
+  };
+
+  const originalRenderWord = renderWord;
+  renderWord = function renderWordWithMemoryClue() {
+    originalRenderWord();
+    updateWordStudy();
+  };
+
+  slowVerseButton?.addEventListener("click", () => speakReaderVerse({ rate: 0.68, label: "Playing slowly" }));
+  repeatVerseButton?.addEventListener("click", () => speakReaderVerse({ rate: 0.82, repeat: 2, label: "Repeating Hebrew" }));
+
+  practiceVerseButton?.addEventListener("click", () => {
+    practiceState.open = !practiceState.open;
+    ensurePracticeReference();
+    updatePracticeUi();
+    closeReaderMenu();
+  });
+
+  readerMenuToggle?.addEventListener("click", openReaderMenu);
+  readerMenuOverlay?.addEventListener("click", (event) => {
+    if (event.target.closest("[data-menu-close]")) closeReaderMenu();
+    if (event.target.closest(".unified-nav-button")) closeReaderMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-practice-action]");
+    if (!button) return;
+    event.preventDefault();
+    handlePracticeAction(button.dataset.practiceAction);
+  });
+
+  hebrewLineElement?.addEventListener("click", (event) => {
+    if (!event.target.closest(".word-token")) return;
+    window.requestAnimationFrame(openWordStudyOverlay);
+  });
+
+  closeWordStudy?.addEventListener("click", closeWordStudyOverlay);
+  wordStudyScrim?.addEventListener("click", closeWordStudyOverlay);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    closeReaderMenu();
+    closeWordStudyOverlay();
+    if (practiceState.open) {
+      practiceState.open = false;
       updatePracticeUi();
     }
   });

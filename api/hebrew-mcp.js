@@ -41,7 +41,7 @@ function warn(warnings, table, action, error) {
 
 async function countRows(client, table, warnings, filter = null) {
   try {
-    let query = client.from(table).select('id', { count: 'exact', head: true });
+    let query = client.from(table).select('*', { count: 'exact', head: true });
     if (filter) query = filter(query);
     const { count, error } = await query;
     if (error) {

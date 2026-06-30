@@ -1,0 +1,160 @@
+.reader-shell {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+}
+
+.bible-reader-header {
+  background:
+    linear-gradient(135deg, rgba(47, 118, 109, 0.12), transparent 52%),
+    rgba(255, 253, 250, 0.96);
+}
+
+.reader-subtitle {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 1.02rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.reader-status {
+  margin: 0;
+  padding: 10px 30px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 250, 241, 0.8);
+}
+
+.reader-status[data-state="connected"] {
+  color: var(--accent-strong);
+  font-weight: 750;
+}
+
+.reader-status[data-state="warning"] {
+  color: var(--clay);
+  font-weight: 750;
+}
+
+.reader-lines {
+  display: grid;
+  gap: 10px;
+}
+
+.line-label {
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bible-verse-card {
+  background:
+    linear-gradient(180deg, rgba(255, 250, 241, 0.74), rgba(255, 253, 250, 0.96));
+}
+
+.bible-verse-card.is-practiced {
+  border-left: 6px solid var(--accent);
+}
+
+.transliteration-line {
+  max-width: 860px;
+  margin: 0 0 10px;
+  color: var(--clay);
+  font-size: clamp(1.25rem, 3vw, 1.85rem);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.bible-reader-home.hide-transliteration .transliteration-line,
+.bible-reader-home.hide-english .english-line {
+  display: none;
+}
+
+.practice-panel {
+  margin: 0 30px 24px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: #fff7e9;
+}
+
+.practice-panel[hidden] {
+  display: none !important;
+}
+
+.practice-panel h2,
+.practice-panel p {
+  margin: 0;
+}
+
+.practice-panel h2 {
+  color: var(--accent-strong);
+  font-size: 1.35rem;
+}
+
+.practice-panel p {
+  color: #37332e;
+  line-height: 1.5;
+}
+
+.practice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.word-study-panel .detail-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.25rem;
+}
+
+.word-study-panel .word-facts div:last-child {
+  border-bottom: 0;
+}
+
+.word-token {
+  border-bottom: 3px solid rgba(47, 118, 109, 0.18);
+  border-radius: 12px;
+}
+
+.word-token::after {
+  content: "";
+  display: block;
+  height: 2px;
+}
+
+@media (max-width: 880px) {
+  .reader-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .reader-status {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .practice-panel {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .chapter-tools .source-toggle-button,
+  .chapter-tools .verse-audio-button {
+    flex: 1 1 92px;
+  }
+}

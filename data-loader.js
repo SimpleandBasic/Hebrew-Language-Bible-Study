@@ -1,6 +1,6 @@
 (() => {
   const statusElement = document.querySelector("#dataStatus");
-  const fallbackMessage = "Using the built-in Genesis 1:1–5 study data.";
+  const fallbackMessage = "Using the built-in Genesis 1 practice data while Supabase is unavailable.";
 
   function setStatus(message, state = "local") {
     if (!statusElement) return;
@@ -56,7 +56,7 @@
       return;
     }
 
-    setStatus("Connecting to the Hebrew study library…", "loading");
+    setStatus("Connecting to the Hebrew Bible reader library…", "loading");
 
     try {
       const headers = getHeaders(publicKey);
@@ -95,7 +95,7 @@
         .filter((verse) => verse.words.length > 0);
 
       if (loadedVerses.length < minimumVerseCount) {
-        setStatus(`The shared library is connected, but the full study set is not ready. ${fallbackMessage}`, "warning");
+        setStatus(`The shared library is connected, but Genesis 1:1 through 1:${minimumVerseCount} are not all ready yet. ${fallbackMessage}`, "warning");
         return;
       }
 
@@ -103,7 +103,7 @@
       activeVerseIndex = 0;
       activeWordIndex = 0;
       render();
-      setStatus(`Connected to Supabase. Loaded ${loadedVerses.length} Genesis verses.`, "connected");
+      setStatus(`Connected to Supabase. Loaded ${loadedVerses.length} Genesis verses for Bible Reader practice.`, "connected");
     } catch (error) {
       console.warn("Hebrew Supabase load failed; local data remains active.", error?.message || error);
       setStatus(`The shared library is unavailable right now. ${fallbackMessage}`, "warning");

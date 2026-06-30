@@ -3,87 +3,161 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hebrew Learning App</title>
+    <title>Hebrew Bible Speaking Trainer</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="bible-reader-v2.css?v=20260630-3" />
   </head>
   <body>
-    <header class="unified-topbar">
+    <header class="unified-topbar reader-focus-topbar">
       <div>
-        <p class="eyebrow">Hebrew Learning App</p>
-        <h1>One Study House</h1>
+        <p class="eyebrow">Hebrew Bible Speaking Trainer</p>
+        <h1>Bible Reader</h1>
       </div>
-      <nav class="unified-nav" aria-label="Hebrew app sections">
-        <button class="unified-nav-button is-active" type="button" data-section="study" aria-controls="studySection" aria-current="page">Study</button>
-        <button class="unified-nav-button" type="button" data-section="flashcards" aria-controls="flashcardsSection">Flashcards</button>
-        <button class="unified-nav-button" type="button" data-section="listen" aria-controls="listenSection">Listen</button>
-        <button class="unified-nav-button" type="button" data-section="lessons" aria-controls="lessonsSection">Lessons</button>
-      </nav>
+      <button class="reader-menu-button" id="readerMenuToggle" type="button" aria-controls="readerMenuOverlay" aria-expanded="false">
+        <span aria-hidden="true">☰</span>
+        Menu
+      </button>
     </header>
 
+    <aside class="reader-menu-overlay" id="readerMenuOverlay" aria-label="Reader menu" hidden>
+      <button class="reader-menu-backdrop" type="button" data-menu-close aria-label="Close reader menu"></button>
+      <div class="reader-menu-drawer" role="dialog" aria-modal="true" aria-labelledby="readerMenuTitle">
+        <div class="reader-menu-heading">
+          <div>
+            <p class="eyebrow">Reader Menu</p>
+            <h2 id="readerMenuTitle">Practice, study, and tools</h2>
+          </div>
+          <button class="icon-button" id="readerMenuClose" type="button" data-menu-close aria-label="Close reader menu">×</button>
+        </div>
+
+        <section class="reader-menu-section" aria-label="Hebrew app sections">
+          <p class="reader-menu-label">Sections</p>
+          <nav class="unified-nav reader-drawer-nav" aria-label="Hebrew app sections">
+            <button class="unified-nav-button is-active" type="button" data-section="study" aria-controls="studySection" aria-current="page">Bible Reader</button>
+            <button class="unified-nav-button" type="button" data-section="flashcards" aria-controls="flashcardsSection">Flashcards</button>
+            <button class="unified-nav-button" type="button" data-section="listen" aria-controls="listenSection">Listen</button>
+            <button class="unified-nav-button" type="button" data-section="lessons" aria-controls="lessonsSection">Lessons</button>
+          </nav>
+        </section>
+
+        <section class="reader-menu-section" aria-label="Reader controls">
+          <p class="reader-menu-label">Reader controls</p>
+          <div class="reader-menu-grid chapter-tools">
+            <button class="icon-button" id="decreaseText" type="button" aria-label="Decrease Hebrew text size" title="Decrease text size">A-</button>
+            <button class="icon-button" id="increaseText" type="button" aria-label="Increase Hebrew text size" title="Increase text size">A+</button>
+            <button class="verse-audio-button" id="speakWholeVerseButton" type="button" aria-label="Play current Hebrew verse">Play Verse</button>
+            <button class="source-toggle-button" id="slowVerseButton" type="button" aria-label="Play current Hebrew verse slowly">Slow Verse</button>
+            <button class="source-toggle-button" id="repeatVerseButton" type="button" aria-label="Repeat current Hebrew verse">Repeat Verse</button>
+            <button class="source-toggle-button practice-toggle-button" id="practiceVerseButton" type="button" aria-controls="practicePanel" aria-expanded="false">Open Practice</button>
+            <button class="speaker-button" id="hearWholeVerseButton" type="button" aria-label="Open Hebrew audio helper" title="Open Hebrew audio helper">
+              &#128266;
+            </button>
+          </div>
+        </section>
+
+        <section class="reader-menu-section" aria-label="Visibility controls">
+          <p class="reader-menu-label">Visibility</p>
+          <div class="reader-menu-grid">
+            <button class="source-toggle-button" id="hideTransliterationButton" type="button" data-practice-action="hide-transliteration" aria-pressed="false">Hide Transliteration</button>
+            <button class="source-toggle-button" id="hideEnglishButton" type="button" data-practice-action="hide-english" aria-pressed="false">Hide English</button>
+            <button class="source-toggle-button" id="markPracticedButton" type="button" data-practice-action="mark-verse">Mark Verse Practiced</button>
+            <button class="source-toggle-button" id="aboutSourcesButton" type="button" aria-controls="aboutSourcesPanel" aria-expanded="false">
+              About / Sources
+            </button>
+          </div>
+        </section>
+
+        <section class="sources-panel drawer-sources-panel" id="aboutSourcesPanel" aria-label="About and sources" hidden>
+          <h2>About / Sources</h2>
+          <div class="sources-grid">
+            <section>
+              <h3>Hebrew Bible Text</h3>
+              <p>The Hebrew text follows the Masoretic Text tradition, using Genesis 1 forms commonly found in Westminster Leningrad Codex / Leningrad Codex based resources.</p>
+            </section>
+            <section>
+              <h3>Study Notes</h3>
+              <p>The glosses, transliterations, roots, grammar notes, context notes, prompts, pronunciation helps, and theme tags are study helps for beginners. They are here to guide you slowly, and they should be compared with trusted Hebrew lexicons and Bible study resources.</p>
+            </section>
+            <section>
+              <h3>Strong's Numbers</h3>
+              <p>Strong's numbers are used as study index numbers that help connect Hebrew words to lexicon resources.</p>
+            </section>
+            <section>
+              <h3>External Study Tools</h3>
+              <p>Blue Letter Bible is linked for Strong's / lexicon lookup. Google Translate is linked as a modern Hebrew audio helper.</p>
+            </section>
+            <section>
+              <h3>Pronunciation Note</h3>
+              <p>Google Translate audio can be helpful for hearing modern Hebrew pronunciation, but it should not be treated as perfect Biblical Hebrew pronunciation.</p>
+            </section>
+            <section>
+              <h3>Disclaimer</h3>
+              <p>This app is a beginner-friendly study tool, not the final word. Keep learning, compare the notes with trusted Hebrew Bible resources, and let the text invite you deeper.</p>
+            </section>
+          </div>
+        </section>
+      </div>
+    </aside>
+
     <main class="unified-main">
-      <section class="app-shell app-section is-active" id="studySection" data-section-panel="study" aria-label="Hebrew Bible study">
-        <section class="reader" aria-label="Hebrew Bible reader">
-          <header class="reader-header">
+      <section class="app-shell reader-shell app-section is-active" id="studySection" data-section-panel="study" aria-label="Hebrew Bible reader and speaking practice">
+        <section class="reader bible-reader-home" aria-label="Hebrew Bible reader">
+          <header class="reader-header bible-reader-header reader-focus-header">
             <div>
               <p class="eyebrow">Genesis 1</p>
-              <h2 class="section-title-large">Hebrew Word Study</h2>
-            </div>
-            <div class="chapter-tools" aria-label="Reader controls">
-              <button class="icon-button" id="decreaseText" type="button" aria-label="Decrease Hebrew text size" title="Decrease text size">A-</button>
-              <button class="icon-button" id="increaseText" type="button" aria-label="Increase Hebrew text size" title="Increase text size">A+</button>
-              <button class="verse-audio-button" id="hearWholeVerseButton" type="button">
-                Hear Whole Verse
-              </button>
-              <button class="speaker-button" id="speakWholeVerseButton" type="button" aria-label="Hear whole verse" title="Hear whole verse">
-                &#128266;
-              </button>
-              <button class="source-toggle-button" id="aboutSourcesButton" type="button" aria-controls="aboutSourcesPanel" aria-expanded="false">
-                About / Sources
-              </button>
+              <h2 class="section-title-large">Hebrew Bible</h2>
+              <p class="reader-subtitle">Tap a Hebrew word for deeper study. Open the menu for practice, listening, flashcards, lessons, and sources.</p>
             </div>
           </header>
 
           <nav class="verse-tabs" id="verseTabs" aria-label="Choose verse"></nav>
-          <p class="helper-note" id="dataStatus" role="status" aria-live="polite">Using the built-in Genesis 1:1–5 study data.</p>
+          <p class="helper-note reader-status" id="dataStatus" role="status" aria-live="polite">Using the built-in Genesis 1 practice data while Supabase is unavailable.</p>
 
-          <section class="sources-panel" id="aboutSourcesPanel" aria-label="About and sources" hidden>
-            <h2>About / Sources</h2>
-            <div class="sources-grid">
-              <section>
-                <h3>Hebrew Bible Text</h3>
-                <p>The Hebrew text follows the Masoretic Text tradition, using Genesis 1 forms commonly found in Westminster Leningrad Codex / Leningrad Codex based resources.</p>
-              </section>
-              <section>
-                <h3>Study Notes</h3>
-                <p>The glosses, transliterations, roots, grammar notes, context notes, prompts, pronunciation helps, and theme tags are study helps for beginners. They are here to guide you slowly, and they should be compared with trusted Hebrew lexicons and Bible study resources.</p>
-              </section>
-              <section>
-                <h3>Strong's Numbers</h3>
-                <p>Strong's numbers are used as study index numbers that help connect Hebrew words to lexicon resources.</p>
-              </section>
-              <section>
-                <h3>External Study Tools</h3>
-                <p>Blue Letter Bible is linked for Strong's / lexicon lookup. Google Translate is linked as a modern Hebrew audio helper.</p>
-              </section>
-              <section>
-                <h3>Pronunciation Note</h3>
-                <p>Google Translate audio can be helpful for hearing modern Hebrew pronunciation, but it should not be treated as perfect Biblical Hebrew pronunciation.</p>
-              </section>
-              <section>
-                <h3>Disclaimer</h3>
-                <p>This app is a beginner-friendly study tool, not the final word. Keep learning, compare the notes with trusted Hebrew Bible resources, and let the text invite you deeper.</p>
-              </section>
-            </div>
-          </section>
-
-          <article class="verse-card">
+          <article class="verse-card bible-verse-card">
             <div class="verse-meta">
               <span id="verseReference">Genesis 1:1</span>
               <span id="wordCount">7 Hebrew words</span>
             </div>
-            <div class="hebrew-line" id="hebrewLine" dir="rtl" lang="he" aria-label="Hebrew verse"></div>
-            <p class="english-line" id="englishLine"></p>
+            <div class="reader-lines" aria-label="Hebrew verse with transliteration and English meaning">
+              <div class="line-label">Hebrew</div>
+              <div class="hebrew-line" id="hebrewLine" dir="rtl" lang="he" aria-label="Hebrew verse"></div>
+              <div class="line-label">Transliteration</div>
+              <p class="transliteration-line" id="transliterationLine"></p>
+              <div class="line-label">English</div>
+              <p class="english-line" id="englishLine"></p>
+            </div>
           </article>
+
+          <section class="practice-panel" id="practicePanel" aria-label="Verse practice mode" hidden>
+            <div class="practice-sheet-heading">
+              <div class="practice-copy">
+                <p class="eyebrow">Practice Mode</p>
+                <h2 id="practiceVerseReference">Genesis 1:1</h2>
+                <p id="practiceStatus">Listen once, read out loud, then repeat slowly.</p>
+              </div>
+              <button class="icon-button" id="closePracticePanel" type="button" data-practice-action="close" aria-label="Close practice mode">×</button>
+            </div>
+            <div class="practice-phrase-card" aria-live="polite">
+              <div class="practice-phrase-meta">
+                <span id="practicePhraseNumber">Phrase 1 of 1</span>
+                <span id="practicePhraseSpokenState">Not spoken yet</span>
+              </div>
+              <p class="line-label">Hebrew phrase</p>
+              <div class="practice-phrase-hebrew" id="practicePhraseHebrew" dir="rtl" lang="he"></div>
+              <p class="line-label practice-transliteration-label">Transliteration</p>
+              <p class="practice-phrase-transliteration" id="practicePhraseTransliteration"></p>
+              <p class="line-label practice-english-label">English phrase meaning</p>
+              <p class="practice-phrase-english" id="practicePhraseEnglish"></p>
+            </div>
+            <div class="practice-actions phrase-actions" aria-label="Phrase practice controls">
+              <button class="source-toggle-button" id="previousPhraseButton" type="button" data-practice-action="previous">Previous Phrase</button>
+              <button class="verse-audio-button" id="playPhraseButton" type="button" data-practice-action="play">Play Phrase</button>
+              <button class="source-toggle-button" id="slowPhraseButton" type="button" data-practice-action="slow">Slow Phrase</button>
+              <button class="source-toggle-button" id="repeatPhraseButton" type="button" data-practice-action="repeat">Repeat Phrase</button>
+              <button class="verse-audio-button" id="markPhraseSpokenButton" type="button" data-practice-action="mark">Mark Phrase Spoken</button>
+              <button class="source-toggle-button" id="nextPhraseButton" type="button" data-practice-action="next">Next Phrase</button>
+            </div>
+          </section>
 
           <section class="notes-band" aria-label="Verse context">
             <h2>Verse Context</h2>
@@ -91,10 +165,17 @@
           </section>
         </section>
 
-        <aside class="detail-panel" aria-label="Selected word details">
+        <div class="word-study-scrim" id="wordStudyScrim" hidden></div>
+        <aside class="detail-panel word-study-panel" id="wordStudyPanel" aria-label="Selected Hebrew word study" hidden>
           <div class="detail-heading">
-            <p class="eyebrow">Selected Word</p>
-            <button class="icon-button" id="copyWord" type="button" aria-label="Copy selected word" title="Copy word">⧉</button>
+            <div>
+              <p class="eyebrow">Word Study</p>
+              <h2>Tap a Hebrew word</h2>
+            </div>
+            <div class="word-study-actions">
+              <button class="icon-button" id="copyWord" type="button" aria-label="Copy selected word" title="Copy word">⧉</button>
+              <button class="icon-button" id="closeWordStudy" type="button" aria-label="Close word study">×</button>
+            </div>
           </div>
           <div class="selected-word-wrap">
             <div class="selected-word" id="selectedHebrew" dir="rtl" lang="he"></div>
@@ -129,6 +210,10 @@
               <dt>Grammar</dt>
               <dd id="selectedGrammar"></dd>
             </div>
+            <div>
+              <dt>Memory clue</dt>
+              <dd id="selectedMemoryClue"></dd>
+            </div>
           </dl>
 
           <button class="lexicon-button" id="blueLetterBibleButton" type="button">
@@ -140,7 +225,7 @@
           <p class="helper-note" id="audioHelperNote">Audio uses your browser's Hebrew voice when available. Google Translate is available as a backup audio helper.</p>
 
           <section class="detail-section">
-            <h2>Context</h2>
+            <h2>Short Study Note</h2>
             <p id="selectedContext"></p>
           </section>
 
@@ -153,7 +238,7 @@
 
       <section class="app-section unified-panel" id="flashcardsSection" data-section-panel="flashcards" aria-label="Hebrew flashcards" hidden>
         <header class="panel-header">
-          <p class="eyebrow">Aleph to Tav</p>
+          <p class="eyebrow">Practice deck</p>
           <h2>Flashcards</h2>
           <p>Practice Hebrew letters, pronunciation symbols, sounds, gematria, and memory pictures without leaving the main app.</p>
         </header>
@@ -173,16 +258,17 @@
         <header class="panel-header">
           <p class="eyebrow">Connector Library</p>
           <h2>Lessons</h2>
-          <p>Published lesson bundles from the Hebrew Developer MCP connector will appear here.</p>
+          <p>Published lesson bundles from the Hebrew Developer MCP connector stay here as a secondary library.</p>
         </header>
         <p class="helper-note" id="lessonStatus" role="status" aria-live="polite">Lessons have not loaded yet.</p>
         <div class="lessons-grid" id="lessonsGrid"></div>
       </section>
     </main>
 
-    <script src="supabase-config.js?v=20260623-2"></script>
+    <script src="supabase-config.js?v=20260630-2"></script>
     <script src="script.js"></script>
-    <script src="data-loader.js?v=20260623-2"></script>
+    <script src="data-loader.js?v=20260630-2"></script>
+    <script src="bible-reader-v2.js?v=20260630-3"></script>
     <script src="unified-app.js?v=20260630-1"></script>
   </body>
 </html>

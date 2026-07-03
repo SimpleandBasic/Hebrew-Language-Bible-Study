@@ -1,0 +1,3 @@
+GitHub Pages refresh for Phase 2.5 Reader Focus Layout.
+No app logic, Supabase schema, or lesson data changed.
+Timestamp: 2026-07-03

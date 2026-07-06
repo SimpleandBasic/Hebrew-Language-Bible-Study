@@ -4,8 +4,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Hebrew Bible Speaking Trainer</title>
+    <script>
+      (() => {
+        const key = "hebrew-reader-theme";
+        const choices = ["system", "light", "dark"];
+        let preference = "system";
+        try {
+          const saved = localStorage.getItem(key);
+          if (choices.includes(saved)) preference = saved;
+        } catch {
+          preference = "system";
+        }
+        const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
+        const actualTheme = preference === "system" ? (prefersDark ? "dark" : "light") : preference;
+        document.documentElement.dataset.readerThemePreference = preference;
+        document.documentElement.dataset.readerTheme = actualTheme;
+      })();
+    </script>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="bible-reader-v2.css?v=20260630-3" />
+    <link rel="stylesheet" href="reader-theme.css?v=20260706-1" />
   </head>
   <body>
     <header class="unified-topbar reader-focus-topbar">
@@ -53,6 +71,16 @@
               &#128266;
             </button>
           </div>
+        </section>
+
+        <section class="reader-menu-section" aria-label="Reader theme setting">
+          <p class="reader-menu-label">Reader theme</p>
+          <div class="reader-menu-grid reader-theme-options" role="group" aria-label="Choose reader theme">
+            <button class="theme-option-button" type="button" data-reader-theme-choice="system" aria-pressed="true">Follow Device</button>
+            <button class="theme-option-button" type="button" data-reader-theme-choice="light" aria-pressed="false">Day Mode</button>
+            <button class="theme-option-button" type="button" data-reader-theme-choice="dark" aria-pressed="false">Night Mode</button>
+          </div>
+          <p class="reader-theme-status" id="readerThemeStatus" aria-live="polite">Following device setting.</p>
         </section>
 
         <section class="reader-menu-section" aria-label="Visibility controls">
@@ -268,6 +296,7 @@
     <script src="supabase-config.js?v=20260630-2"></script>
     <script src="script.js"></script>
     <script src="data-loader.js?v=20260630-2"></script>
+    <script src="reader-theme.js?v=20260706-1"></script>
     <script src="bible-reader-v2.js?v=20260630-3"></script>
     <script src="chapter-reader-v2.js?v=20260704-1"></script>
     <script src="unified-app.js?v=20260630-1"></script>

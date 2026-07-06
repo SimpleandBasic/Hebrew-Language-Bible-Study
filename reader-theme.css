@@ -1,0 +1,150 @@
+:root {
+  --theme-control-bg: #fff7e9;
+  --theme-control-active-bg: var(--accent);
+  --theme-control-active-ink: #ffffff;
+}
+
+:root[data-reader-theme="dark"] {
+  color-scheme: dark;
+  --bg: #11100e;
+  --ink: #f6efe2;
+  --muted: #c9bdad;
+  --line: #3b342b;
+  --panel: #1b1814;
+  --accent: #5fb5a8;
+  --accent-strong: #8bd4ca;
+  --gold: #e0aa5f;
+  --clay: #e19a87;
+  --shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+  --theme-control-bg: #241f1a;
+  --theme-control-active-bg: #5fb5a8;
+  --theme-control-active-ink: #071210;
+}
+
+.reader-theme-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.theme-option-button {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  background: var(--theme-control-bg);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.theme-option-button:hover,
+.theme-option-button:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(47, 118, 109, 0.24);
+  outline-offset: 2px;
+}
+
+.theme-option-button[aria-pressed="true"] {
+  border-color: var(--theme-control-active-bg);
+  background: var(--theme-control-active-bg);
+  color: var(--theme-control-active-ink);
+}
+
+.reader-theme-status {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+body[data-reader-theme="dark"] {
+  background:
+    radial-gradient(circle at top left, rgba(95, 181, 168, 0.18), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(224, 170, 95, 0.12), transparent 32%),
+    var(--bg);
+  color: var(--ink);
+}
+
+body[data-reader-theme="dark"] .reader,
+body[data-reader-theme="dark"] .detail-panel,
+body[data-reader-theme="dark"] .reader-menu-drawer,
+body[data-reader-theme="dark"] .word-study-panel {
+  background: rgba(27, 24, 20, 0.98);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
+body[data-reader-theme="dark"] .reader-menu-section,
+body[data-reader-theme="dark"] .drawer-sources-panel,
+body[data-reader-theme="dark"] .practice-panel,
+body[data-reader-theme="dark"] .practice-phrase-card,
+body[data-reader-theme="dark"] .notes-band,
+body[data-reader-theme="dark"] .unified-panel {
+  background: rgba(36, 31, 26, 0.96);
+  border-color: var(--line);
+}
+
+body[data-reader-theme="dark"] .bible-reader-header,
+body[data-reader-theme="dark"] .bible-verse-card,
+body[data-reader-theme="dark"] .reader-status,
+body[data-reader-theme="dark"] .verse-tabs {
+  background:
+    linear-gradient(135deg, rgba(95, 181, 168, 0.12), transparent 52%),
+    rgba(27, 24, 20, 0.96);
+  border-color: var(--line);
+}
+
+body[data-reader-theme="dark"] .bible-verse-card {
+  background:
+    radial-gradient(circle at top, rgba(224, 170, 95, 0.1), transparent 44%),
+    linear-gradient(180deg, rgba(36, 31, 26, 0.96), rgba(27, 24, 20, 0.98));
+}
+
+body[data-reader-theme="dark"] .reader-menu-backdrop,
+body[data-reader-theme="dark"] .word-study-scrim {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+body[data-reader-theme="dark"] .icon-button,
+body[data-reader-theme="dark"] .speaker-button,
+body[data-reader-theme="dark"] .source-toggle-button,
+body[data-reader-theme="dark"] .verse-tab,
+body[data-reader-theme="dark"] .project-link,
+body[data-reader-theme="dark"] .unified-nav-button,
+body[data-reader-theme="dark"] .lexicon-button.secondary-action {
+  background: #241f1a;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+body[data-reader-theme="dark"] .source-toggle-button.active,
+body[data-reader-theme="dark"] .unified-nav-button.is-active,
+body[data-reader-theme="dark"] .verse-tab.active,
+body[data-reader-theme="dark"] .project-link.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #071210;
+}
+
+body[data-reader-theme="dark"] .english-line,
+body[data-reader-theme="dark"] .practice-panel p,
+body[data-reader-theme="dark"] .practice-phrase-english,
+body[data-reader-theme="dark"] .reader-subtitle,
+body[data-reader-theme="dark"] .helper-note {
+  color: var(--muted);
+}
+
+body[data-reader-theme="dark"] .transliteration-line,
+body[data-reader-theme="dark"] .practice-phrase-transliteration {
+  color: var(--clay);
+}
+
+body[data-reader-theme="dark"] .word-token {
+  color: var(--ink);
+  border-bottom-color: rgba(95, 181, 168, 0.3);
+}
+
+@media (max-width: 560px) {
+  .reader-theme-options {
+    grid-template-columns: 1fr;
+  }
+}

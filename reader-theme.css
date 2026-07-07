@@ -2,6 +2,13 @@
   --theme-control-bg: #fff7e9;
   --theme-control-active-bg: var(--accent);
   --theme-control-active-ink: #ffffff;
+  --word-study-bg: #fffdfa;
+  --word-study-ink: #191815;
+  --word-study-muted: #69645c;
+  --word-study-soft: #fff7e9;
+  --word-study-divider: #d9d1c4;
+  --word-study-hebrew: #191815;
+  --word-study-transliteration: #8f4d3d;
 }
 
 :root[data-reader-theme="dark"] {
@@ -19,6 +26,13 @@
   --theme-control-bg: #241f1a;
   --theme-control-active-bg: #5fb5a8;
   --theme-control-active-ink: #071210;
+  --word-study-bg: #171411;
+  --word-study-ink: #f8efe2;
+  --word-study-muted: #c9bdad;
+  --word-study-soft: #241f1a;
+  --word-study-divider: #4a4035;
+  --word-study-hebrew: #f6efe2;
+  --word-study-transliteration: #f0a896;
 }
 
 .reader-theme-options {
@@ -141,6 +155,81 @@ body[data-reader-theme="dark"] .practice-phrase-transliteration {
 body[data-reader-theme="dark"] .word-token {
   color: var(--ink);
   border-bottom-color: rgba(95, 181, 168, 0.3);
+}
+
+body[data-reader-theme="light"] .word-study-panel,
+body[data-reader-theme="dark"] .word-study-panel {
+  background: var(--word-study-bg);
+  color: var(--word-study-ink);
+  border-color: var(--word-study-divider);
+}
+
+body[data-reader-theme="light"] .word-study-panel *,
+body[data-reader-theme="dark"] .word-study-panel * {
+  border-color: var(--word-study-divider);
+}
+
+body[data-reader-theme="light"] .word-study-panel .detail-heading h2,
+body[data-reader-theme="light"] .word-study-panel dd,
+body[data-reader-theme="light"] .word-study-panel .detail-section p,
+body[data-reader-theme="light"] .word-study-panel .helper-note,
+body[data-reader-theme="dark"] .word-study-panel .detail-heading h2,
+body[data-reader-theme="dark"] .word-study-panel dd,
+body[data-reader-theme="dark"] .word-study-panel .detail-section p,
+body[data-reader-theme="dark"] .word-study-panel .helper-note {
+  color: var(--word-study-ink);
+}
+
+body[data-reader-theme="light"] .word-study-panel dt,
+body[data-reader-theme="dark"] .word-study-panel dt {
+  color: var(--word-study-muted);
+}
+
+body[data-reader-theme="light"] .word-study-panel .selected-word,
+body[data-reader-theme="dark"] .word-study-panel .selected-word {
+  background: var(--word-study-soft);
+  color: var(--word-study-hebrew);
+  border-color: var(--word-study-divider);
+}
+
+body[data-reader-theme="light"] .word-study-panel .selected-speaker,
+body[data-reader-theme="dark"] .word-study-panel .selected-speaker {
+  background: var(--word-study-soft);
+  color: var(--accent-strong);
+  border-color: var(--word-study-divider);
+}
+
+body[data-reader-theme="dark"] .word-study-panel .selected-speaker {
+  color: var(--accent-strong);
+}
+
+body[data-reader-theme="light"] .word-study-panel .transliteration,
+body[data-reader-theme="dark"] .word-study-panel .transliteration {
+  color: var(--word-study-transliteration);
+}
+
+body[data-reader-theme="light"] .word-study-panel .eyebrow,
+body[data-reader-theme="dark"] .word-study-panel .eyebrow {
+  color: var(--accent-strong);
+}
+
+body[data-reader-theme="light"] .word-study-panel .icon-button,
+body[data-reader-theme="dark"] .word-study-panel .icon-button {
+  background: var(--word-study-soft);
+  color: var(--word-study-ink);
+  border-color: var(--word-study-divider);
+}
+
+body[data-reader-theme="dark"] .word-study-panel .lexicon-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #071210;
+}
+
+body[data-reader-theme="dark"] .word-study-panel .lexicon-button.secondary-action {
+  background: var(--word-study-soft);
+  border-color: var(--word-study-divider);
+  color: var(--word-study-ink);
 }
 
 @media (max-width: 560px) {

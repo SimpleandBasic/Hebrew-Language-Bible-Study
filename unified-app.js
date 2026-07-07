@@ -113,4 +113,99 @@
       render([]);
     }
   }
+
+  const wordStudyHoldDelayMs = 950;
+  const wordStudyMoveTolerance = 12;
+  let wordStudyHold = null;
+
+  function openWordStudyOverlay() {
+    const panel = document.querySelector("#wordStudyPanel");
+    const scrim = document.querySelector("#wordStudyScrim");
+    if (panel) panel.hidden = false;
+    if (scrim) scrim.hidden = false;
+    document.body.classList.add("word-study-open");
+  }
+
+  function getWordStudyTarget(event) {
+    const chapterToken = event.target.closest?.(".chapter-word-token");
+    if (chapterToken) {
+      const verseIndex = Number(chapterToken.dataset.verseIndex);
+      const wordIndex = Number(chapterToken.dataset.wordIndex);
+      if (!Number.isInteger(verseIndex) || !Number.isInteger(wordIndex)) return null;
+      return { token: chapterToken, verseIndex, wordIndex };
+    }
+
+    const verseToken = event.target.closest?.(".word-token");
+    if (!verseToken) return null;
+    const tokens = Array.from(document.querySelectorAll("#hebrewLine .word-token"));
+    const wordIndex = tokens.indexOf(verseToken);
+    if (wordIndex < 0) return null;
+    return { token: verseToken, verseIndex: activeVerseIndex, wordIndex };
+  }
+
+  function clearWordStudyHold() {
+    if (!wordStudyHold) return;
+    window.clearTimeout(wordStudyHold.timer);
+    wordStudyHold.token?.classList.remove("is-holding-word-study");
+    wordStudyHold = null;
+  }
+
+  function showHeldWordStudy(target) {
+    activeVerseIndex = target.verseIndex;
+    activeWordIndex = target.wordIndex;
+    renderVerse();
+    renderWord();
+    window.requestAnimationFrame(openWordStudyOverlay);
+  }
+
+  document.addEventListener("pointerdown", (event) => {
+    const target = getWordStudyTarget(event);
+    if (!target) return;
+
+    clearWordStudyHold();
+    target.token.classList.add("is-holding-word-study");
+    wordStudyHold = {
+      ...target,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      timer: window.setTimeout(() => {
+        const held = wordStudyHold;
+        if (!held) return;
+        held.token?.classList.remove("is-holding-word-study");
+        wordStudyHold = null;
+        showHeldWordStudy(held);
+      }, wordStudyHoldDelayMs)
+    };
+  }, true);
+
+  document.addEventListener("pointermove", (event) => {
+    if (!wordStudyHold || event.pointerId !== wordStudyHold.pointerId) return;
+    const movedX = Math.abs(event.clientX - wordStudyHold.startX);
+    const movedY = Math.abs(event.clientY - wordStudyHold.startY);
+    if (movedX > wordStudyMoveTolerance || movedY > wordStudyMoveTolerance) clearWordStudyHold();
+  }, true);
+
+  document.addEventListener("pointerup", clearWordStudyHold, true);
+  document.addEventListener("pointercancel", clearWordStudyHold, true);
+
+  document.addEventListener("click", (event) => {
+    if (!getWordStudyTarget(event)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+
+  document.addEventListener("contextmenu", (event) => {
+    if (!getWordStudyTarget(event)) return;
+    event.preventDefault();
+  }, true);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const target = getWordStudyTarget(event);
+    if (!target) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    showHeldWordStudy(target);
+  }, true);
 })();

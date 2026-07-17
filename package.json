@@ -5,6 +5,7 @@
   "private": true,
   "description": "GitHub Pages Hebrew reader with Vercel-hosted MCP and audio-library services.",
   "scripts": {
+    "postinstall": "node scripts/check-all.js",
     "check": "node scripts/check-all.js",
     "test": "node tests/audio-logic.test.mjs"
   },

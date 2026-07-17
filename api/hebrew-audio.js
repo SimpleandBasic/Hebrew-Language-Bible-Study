@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 const DEFAULT_MODEL = "gpt-4o-mini-tts";
-const DEFAULT_VOICE = "ash";
+const DEFAULT_VOICE = "cedar";
 const DEFAULT_INSTRUCTIONS = "Speak warmly, clearly, reverently, and naturally. Pronounce Hebrew carefully. Do not add stage directions or commentary that is not present in the input.";
 
 function json(response, status, payload) {

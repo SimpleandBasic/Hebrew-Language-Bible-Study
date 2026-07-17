@@ -93,7 +93,8 @@
     const reference = normalizeReference(verse.reference);
     return state.lessons.find((lesson) => {
       const contentReference = normalizeReference(lesson.content?.lesson?.reference || lesson.content?.referenceRange);
-      return contentReference === reference || normalizeReference(lesson.title).startsWith(reference);
+      const titleReference = normalizeReference(lesson.title).match(/^[a-z]+\s+\d+:\d+/)?.[0] || "";
+      return contentReference === reference || titleReference === reference;
     }) || null;
   }
 

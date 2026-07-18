@@ -9,7 +9,8 @@ const audioLibraryFiles = [
   "library.html", "library.css", "library.js", "audio-admin.html", "audio-admin.js",
   "assets/genesis-cover.webp", "api/hebrew-audio.js", "AUDIO_LIBRARY.md", "vercel.json",
   "supabase/migrations/20260717_hebrew_audio_library.sql",
-  "supabase/migrations/20260717_hebrew_audio_library_browser_grants.sql"
+  "supabase/migrations/20260717_hebrew_audio_library_browser_grants.sql",
+  "supabase/migrations/20260717_hebrew_audio_library_service_role_grants.sql"
 ];
 const requiredFiles = [...existingReaderFiles, ...audioLibraryFiles];
 
@@ -46,10 +47,20 @@ const grantsMigration = readFileSync("supabase/migrations/20260717_hebrew_audio_
 for (const table of ["hebrew_book_albums", "hebrew_audio_tracks", "hebrew_audio_segments"]) {
   if (!grantsMigration.includes(table)) throw new Error(`Browser grants migration is missing ${table}`);
 }
+const serviceGrantsMigration = readFileSync("supabase/migrations/20260717_hebrew_audio_library_service_role_grants.sql", "utf8");
+for (const table of ["hebrew_book_albums", "hebrew_audio_tracks", "hebrew_audio_segments"]) {
+  if (!serviceGrantsMigration.includes(table)) throw new Error(`Service-role grants migration is missing ${table}`);
+}
+
+const vercelConfig = JSON.parse(readFileSync("vercel.json", "utf8"));
+const rootRedirect = vercelConfig.redirects?.find((rule) => rule.source === "/");
+if (rootRedirect?.destination !== "/library") throw new Error("Vercel root must open the Scripture Library at /library");
+if (!indexHtml.includes("Hebrew Bible Speaking Trainer")) throw new Error("Existing Hebrew reader must remain at index.html");
+
 for (const forbidden of [/sk-[A-Za-z0-9_-]{20,}/, /sb_secret_[A-Za-z0-9_-]{20,}/]) {
   for (const file of ["library.js", "audio-admin.js", "api/hebrew-audio.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md"]) {
     if (forbidden.test(readFileSync(file, "utf8"))) throw new Error(`Possible secret found in ${file}`);
   }
 }
 
-console.log("Hebrew reader and audio-library checks passed.");
+console.log("Hebrew reader, audio-library, routing, and security checks passed.");

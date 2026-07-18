@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 960" role="img" aria-labelledby="title desc">
+  <title id="title">Genesis creation artwork</title>
+  <desc id="desc">Golden light breaking over the earth beneath a field of stars.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#09080d"/>
+      <stop offset="0.52" stop-color="#17101b"/>
+      <stop offset="1" stop-color="#4a2916"/>
+    </linearGradient>
+    <radialGradient id="light" cx="50%" cy="46%" r="48%">
+      <stop offset="0" stop-color="#fff8cf" stop-opacity="0.98"/>
+      <stop offset="0.12" stop-color="#ffd77a" stop-opacity="0.9"/>
+      <stop offset="0.34" stop-color="#d99436" stop-opacity="0.42"/>
+      <stop offset="0.68" stop-color="#7f431c" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="earth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#184c67"/>
+      <stop offset="0.5" stop-color="#0e3148"/>
+      <stop offset="1" stop-color="#07131d"/>
+    </linearGradient>
+    <linearGradient id="land" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bb8c47"/>
+      <stop offset="1" stop-color="#4d5d31"/>
+    </linearGradient>
+    <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f1c76d" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#f1c76d"/>
+      <stop offset="1" stop-color="#f1c76d" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <clipPath id="earthClip">
+      <circle cx="480" cy="780" r="300"/>
+    </clipPath>
+  </defs>
+
+  <rect width="960" height="960" fill="url(#sky)"/>
+  <rect width="960" height="960" fill="url(#light)"/>
+
+  <g fill="#fff4c7">
+    <circle cx="112" cy="138" r="2.8" opacity="0.9"/>
+    <circle cx="180" cy="236" r="1.7" opacity="0.7"/>
+    <circle cx="252" cy="112" r="2.2" opacity="0.82"/>
+    <circle cx="320" cy="208" r="1.5" opacity="0.68"/>
+    <circle cx="402" cy="92" r="2.6" opacity="0.88"/>
+    <circle cx="518" cy="158" r="1.6" opacity="0.72"/>
+    <circle cx="614" cy="86" r="2.4" opacity="0.86"/>
+    <circle cx="705" cy="188" r="1.7" opacity="0.72"/>
+    <circle cx="822" cy="126" r="2.9" opacity="0.9"/>
+    <circle cx="872" cy="276" r="1.8" opacity="0.72"/>
+    <circle cx="94" cy="342" r="1.5" opacity="0.62"/>
+    <circle cx="232" cy="330" r="2.2" opacity="0.8"/>
+    <circle cx="744" cy="326" r="2" opacity="0.75"/>
+    <circle cx="848" cy="388" r="1.4" opacity="0.6"/>
+  </g>
+
+  <circle cx="480" cy="418" r="82" fill="#ffe5a0" opacity="0.36" filter="url(#glow)"/>
+  <circle cx="480" cy="418" r="38" fill="#fff5c5" opacity="0.96"/>
+  <path d="M480 305 L500 382 L576 362 L516 414 L580 460 L502 447 L480 527 L458 447 L380 460 L444 414 L384 362 L460 382 Z" fill="#f7c75f" opacity="0.28" filter="url(#soft)"/>
+
+  <circle cx="480" cy="780" r="306" fill="#091923" opacity="0.8"/>
+  <circle cx="480" cy="780" r="300" fill="url(#earth)"/>
+  <g clip-path="url(#earthClip)">
+    <path d="M206 712 C296 654 356 674 409 706 C455 734 506 728 551 697 C616 652 697 657 773 707 L826 786 L792 890 L188 890 Z" fill="#16506b" opacity="0.95"/>
+    <path d="M264 676 C309 626 364 626 413 657 C438 672 450 701 432 724 C410 751 370 743 344 769 C318 795 305 832 268 844 C233 855 205 830 196 798 C187 762 221 722 264 676 Z" fill="url(#land)"/>
+    <path d="M578 654 C625 619 694 625 735 663 C763 689 771 726 750 750 C728 774 686 760 666 790 C645 821 663 857 632 882 C603 905 558 890 540 860 C518 824 543 787 530 754 C518 723 539 683 578 654 Z" fill="url(#land)"/>
+    <path d="M410 800 C462 772 519 779 560 812 C591 837 609 873 596 904 L356 904 C348 872 368 826 410 800 Z" fill="#6c6939" opacity="0.78"/>
+    <path d="M188 742 C309 702 416 708 517 742 C621 777 716 781 814 749" fill="none" stroke="#8ed3e3" stroke-width="6" opacity="0.22"/>
+    <path d="M176 784 C286 754 390 761 489 794 C598 831 706 830 824 788" fill="none" stroke="#d4edf2" stroke-width="4" opacity="0.18"/>
+  </g>
+  <ellipse cx="480" cy="556" rx="266" ry="70" fill="#ffcf69" opacity="0.22" filter="url(#soft)"/>
+  <path d="M170 588 Q480 470 790 588" fill="none" stroke="#f2c46d" stroke-width="4" opacity="0.72"/>
+
+  <rect x="170" y="70" width="620" height="1.5" fill="url(#goldLine)"/>
+  <text x="480" y="160" text-anchor="middle" fill="#f0c66d" font-family="Georgia, 'Times New Roman', serif" font-size="32" letter-spacing="10">בְּרֵאשִׁית</text>
+  <text x="480" y="228" text-anchor="middle" fill="#fff8e5" font-family="Arial, Helvetica, sans-serif" font-size="66" font-weight="700" letter-spacing="14">GENESIS</text>
+  <text x="480" y="272" text-anchor="middle" fill="#d7c5ae" font-family="Arial, Helvetica, sans-serif" font-size="20" letter-spacing="5">IN THE BEGINNING</text>
+  <rect x="265" y="304" width="430" height="1.5" fill="url(#goldLine)" opacity="0.8"/>
+
+  <rect x="18" y="18" width="924" height="924" rx="48" fill="none" stroke="#edc978" stroke-width="2" opacity="0.28"/>
+</svg>

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import hebrewAudio, { __test } from "../api/hebrew-audio.js";
 
-const { checksumFor, estimateMp3DurationSeconds, segmentAudioPath } = __test;
+const { checksumFor, estimateMp3DurationSeconds, segmentAudioPath, serviceAuthHeaders } = __test;
 const segment = { spoken_text: "Shalom", sort_order: 10, segment_type: "opening" };
 const a = checksumFor(segment, "gpt-4o-mini-tts", "cedar", "Warm", { speed: 1 });
 const b = checksumFor(segment, "gpt-4o-mini-tts", "cedar", "Warm", { speed: 1 });
@@ -10,6 +10,8 @@ assert.equal(a, b, "unchanged generation inputs must reuse the same checksum");
 assert.notEqual(a, c, "changed spoken text must produce a new checksum");
 assert.equal(segmentAudioPath({ verse_reference: "Genesis 1:14", script_version: "v1" }, segment), "audio/genesis/1/14/v1/010-opening.mp3");
 assert.equal(estimateMp3DurationSeconds(Buffer.from("not an mp3")), null);
+assert.deepEqual(serviceAuthHeaders("sb_secret_example"), { apikey: "sb_secret_example" }, "modern Supabase secret keys must not be sent as Bearer tokens");
+assert.deepEqual(serviceAuthHeaders("eyJlegacy"), { apikey: "eyJlegacy", Authorization: "Bearer eyJlegacy" }, "legacy JWT service-role keys keep Bearer compatibility");
 
 function mockResponse() {
   return {
@@ -61,4 +63,4 @@ try {
   }
 }
 
-console.log("audio logic and invalid-request tests passed");
+console.log("audio logic, auth-header, and invalid-request tests passed");

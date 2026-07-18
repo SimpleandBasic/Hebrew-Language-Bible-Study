@@ -36,10 +36,15 @@ function requireEnvironment() {
 function supabaseUrl() { return process.env.HEBREW_SUPABASE_URL || process.env.SUPABASE_URL; }
 function serviceRoleKey() { return process.env.HEBREW_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY; }
 
+function serviceAuthHeaders(key = serviceRoleKey()) {
+  const headers = { apikey: key };
+  if (String(key).startsWith("eyJ")) headers.Authorization = `Bearer ${key}`;
+  return headers;
+}
+
 function serviceHeaders(extra = {}) {
   return {
-    apikey: serviceRoleKey(),
-    Authorization: `Bearer ${serviceRoleKey()}`,
+    ...serviceAuthHeaders(),
     "Content-Type": "application/json",
     ...extra,
   };
@@ -132,8 +137,7 @@ async function uploadAudio(path, audioBuffer) {
   const response = await fetch(`${supabaseUrl().replace(/\/$/, "")}/storage/v1/object/hebrew-media/${path.split("/").map(encodeURIComponent).join("/")}`, {
     method: "POST",
     headers: {
-      apikey: serviceRoleKey(),
-      Authorization: `Bearer ${serviceRoleKey()}`,
+      ...serviceAuthHeaders(),
       "Content-Type": "audio/mpeg",
       "x-upsert": "true",
       "Cache-Control": "public, max-age=31536000, immutable",
@@ -279,4 +283,4 @@ export default async function hebrewAudio(request, response) {
   }
 }
 
-export const __test = { checksumFor, estimateMp3DurationSeconds, segmentAudioPath };
+export const __test = { checksumFor, estimateMp3DurationSeconds, segmentAudioPath, serviceAuthHeaders };

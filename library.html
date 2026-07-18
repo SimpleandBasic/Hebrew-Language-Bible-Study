@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#17120d" />
+    <title>Hebrew Scripture Library</title>
+    <link rel="preconnect" href="https://cmryhxnhnltrewvduico.supabase.co" crossorigin />
+    <link rel="stylesheet" href="library.css?v=20260717-1" />
+  </head>
+  <body>
+    <div class="app-frame">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Hebrew Bible Study</p>
+          <h1>Scripture Library</h1>
+        </div>
+        <a class="read-link" href="index.html">Read</a>
+      </header>
+
+      <main id="app" aria-live="polite">
+        <section class="screen is-active" id="libraryScreen" data-screen="library">
+          <div class="hero-copy">
+            <p class="eyebrow">Audio Scripture Library</p>
+            <h2>Listen slowly. Study deeply.</h2>
+            <p>Books are albums. Chapters are sections. Verse lessons are tracks.</p>
+          </div>
+
+          <section id="continueSection" class="continue-card" hidden>
+            <div>
+              <p class="eyebrow">Continue Listening</p>
+              <h3 id="continueTitle">Genesis 1:14</h3>
+              <p id="continueMeta">Resume your lesson</p>
+            </div>
+            <button id="continueButton" class="round-play" type="button" aria-label="Continue listening">▶</button>
+          </section>
+
+          <section class="section-block" aria-labelledby="libraryHeading">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Bible Albums</p>
+                <h2 id="libraryHeading">Library</h2>
+              </div>
+              <div class="library-counts" id="libraryCounts">Loading…</div>
+            </div>
+            <div class="album-grid" id="albumGrid"></div>
+          </section>
+        </section>
+
+        <section class="screen" id="genesisScreen" data-screen="genesis" hidden>
+          <button class="back-button" data-go="library" type="button">← Library</button>
+          <section class="album-hero">
+            <img id="genesisArtwork" src="assets/genesis-cover.webp" alt="Genesis creation artwork" />
+            <div>
+              <p class="eyebrow">Book Album</p>
+              <h2>Genesis</h2>
+              <p id="genesisSubtitle">Beginnings, creation, covenant, and the faithful ordering of our Father.</p>
+              <div class="album-stats" id="genesisStats"></div>
+            </div>
+          </section>
+          <div id="chapterList"></div>
+        </section>
+
+        <section class="screen" id="playerScreen" data-screen="player" hidden>
+          <button class="back-button" data-go="genesis" type="button">← Genesis</button>
+          <section class="player-shell">
+            <img class="player-artwork" src="assets/genesis-cover.webp" alt="Genesis creation artwork" />
+            <p class="eyebrow" id="playerReference">Genesis 1:14</p>
+            <h2 id="playerTitle">Signs, Seasons, Days, and Years</h2>
+            <p class="section-label" id="currentSectionLabel">Opening and welcome</p>
+
+            <div class="transport" aria-label="Audio controls">
+              <button id="previousSegment" type="button" aria-label="Previous section">⏮</button>
+              <button id="playPause" class="main-play" type="button" aria-label="Play">▶</button>
+              <button id="nextSegment" type="button" aria-label="Next section">⏭</button>
+            </div>
+
+            <div class="seek-row">
+              <span id="elapsedTime">0:00</span>
+              <input id="seekControl" type="range" min="0" max="100" value="0" step="0.1" aria-label="Seek through lesson" />
+              <span id="totalTime">0:00</span>
+            </div>
+
+            <div class="player-options">
+              <label for="speedControl">Speed</label>
+              <select id="speedControl">
+                <option value="0.75">0.75×</option>
+                <option value="1" selected>1×</option>
+                <option value="1.25">1.25×</option>
+                <option value="1.5">1.5×</option>
+                <option value="2">2×</option>
+              </select>
+              <span id="segmentCounter">Section 1 of 10</span>
+            </div>
+
+            <audio id="audioElement" preload="metadata"></audio>
+
+            <section class="transcript-card">
+              <p class="eyebrow">Full Transcript</p>
+              <div id="fullTranscript"></div>
+            </section>
+
+            <section class="jesus-card" id="jesusSection">
+              <p class="eyebrow">Did You Know?</p>
+              <h3>See Jesus Here</h3>
+              <div id="jesusTranscript"></div>
+            </section>
+
+            <a id="openReaderButton" class="reader-button" href="index.html">Open Hebrew Reader &amp; Word Study</a>
+          </section>
+        </section>
+
+        <section class="status-card" id="statusCard" role="status">Connecting to the Hebrew library…</section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Main navigation">
+        <button type="button" data-go="library" class="is-active">Library</button>
+        <a href="index.html">Read</a>
+      </nav>
+    </div>
+
+    <script src="supabase-config.js?v=20260630-2"></script>
+    <script src="library.js?v=20260717-1"></script>
+  </body>
+</html>

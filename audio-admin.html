@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#17120d" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Hebrew Audio Generator</title>
+    <link rel="stylesheet" href="library.css?v=20260717-2" />
+    <style>
+      .admin-shell { width: min(100%, 620px); margin: 0 auto; padding: calc(30px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom)); }
+      .admin-card { border: 1px solid var(--line); border-radius: 26px; padding: 22px; background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.018)); box-shadow: var(--shadow); }
+      .admin-card h1 { margin: 7px 0 10px; font-size: clamp(2rem, 9vw, 3rem); line-height: 1; }
+      .admin-card > p { color: var(--muted); line-height: 1.55; }
+      .admin-form { display: grid; gap: 14px; margin-top: 22px; }
+      .admin-form label { font-weight: 800; }
+      .admin-form input { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--panel); color: var(--text); }
+      .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .admin-actions button { border: 1px solid var(--line); border-radius: 14px; padding: 13px 10px; background: rgba(255,255,255,.05); font-weight: 850; }
+      .admin-actions .primary { border: 0; background: linear-gradient(145deg, #f5d58f, #c99243); color: #1b140b; }
+      .admin-actions button:disabled { opacity: .45; }
+      .admin-status { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; padding: 14px; min-height: 58px; color: var(--muted); white-space: pre-wrap; line-height: 1.5; }
+      .admin-status[data-state="error"] { color: #ffb7ad; border-color: rgba(255,100,80,.25); }
+      .admin-status[data-state="success"] { color: #cceabf; border-color: rgba(150,220,120,.25); }
+      .admin-note { margin-top: 14px; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+      .admin-link { display: inline-block; margin-top: 20px; color: var(--gold); font-weight: 800; text-decoration: none; }
+      @media (max-width: 440px) { .admin-actions { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main class="admin-shell">
+      <section class="admin-card">
+        <p class="eyebrow">Private Audio Tool</p>
+        <h1>Genesis 1:14 Generator</h1>
+        <p>Each request generates only one missing or changed section. Successful sections are reused instead of charged twice.</p>
+
+        <form id="generatorForm" class="admin-form">
+          <label for="adminKey">Hebrew audio admin key</label>
+          <input id="adminKey" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" required />
+          <div class="admin-actions">
+            <button id="generateNext" type="submit">Generate next section</button>
+            <button id="generateAll" class="primary" type="button">Generate all remaining</button>
+          </div>
+        </form>
+
+        <div id="adminStatus" class="admin-status" role="status">Enter the private admin key. It stays only in this open page and is never saved.</div>
+        <p class="admin-note">Keep this page private. Closing or refreshing it clears the key. The endpoint still verifies the server-side credential on every request.</p>
+        <a class="admin-link" href="library.html">← Back to Scripture Library</a>
+      </section>
+    </main>
+    <script src="audio-admin.js?v=20260717-1"></script>
+  </body>
+</html>

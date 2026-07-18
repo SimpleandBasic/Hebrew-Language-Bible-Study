@@ -1,6 +1,24 @@
 {
+  "cleanUrls": true,
   "rewrites": [
+    { "source": "/", "destination": "/library.html" },
     { "source": "/mcp", "destination": "/api/hebrew-mcp" },
     { "source": "/mcp/:path*", "destination": "/api/hebrew-mcp" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
+      ]
+    }
   ]
 }

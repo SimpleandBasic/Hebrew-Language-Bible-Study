@@ -6,8 +6,8 @@ const existingReaderFiles = [
   "script.js", "data-loader.js", "bible-reader-v2.js", "unified-app.js", "supabase-config.js"
 ];
 const audioLibraryFiles = [
-  "library.html", "library.css", "library.js", "audio-admin.html", "audio-admin.js",
-  "assets/genesis-cover.webp", "api/hebrew-audio.js", "AUDIO_LIBRARY.md", "vercel.json",
+  "library.html", "library.css", "library.js", "artwork-fix.js", "audio-admin.html", "audio-admin.js",
+  "assets/genesis-cover.svg", "api/hebrew-audio.js", "AUDIO_LIBRARY.md", "vercel.json",
   "supabase/migrations/20260717_hebrew_audio_library.sql",
   "supabase/migrations/20260717_hebrew_audio_library_browser_grants.sql",
   "supabase/migrations/20260717_hebrew_audio_library_service_role_grants.sql"
@@ -26,7 +26,7 @@ for (const file of existingReaderFiles.filter((file) => file !== "index.html")) 
 }
 
 const libraryHtml = readFileSync("library.html", "utf8");
-for (const file of ["library.css", "library.js", "supabase-config.js", "assets/genesis-cover.webp"]) {
+for (const file of ["library.css", "library.js", "artwork-fix.js", "supabase-config.js", "assets/genesis-cover.svg"]) {
   if (!libraryHtml.includes(file)) throw new Error(`library.html does not reference ${file}`);
 }
 const adminHtml = readFileSync("audio-admin.html", "utf8");
@@ -34,7 +34,7 @@ for (const file of ["library.css", "audio-admin.js"]) {
   if (!adminHtml.includes(file)) throw new Error(`audio-admin.html does not reference ${file}`);
 }
 
-for (const file of [...existingReaderFiles.filter((file) => file.endsWith(".js")), "library.js", "audio-admin.js", "api/hebrew-audio.js", "scripts/generate-hebrew-audio.mjs"]) {
+for (const file of [...existingReaderFiles.filter((file) => file.endsWith(".js")), "library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "scripts/generate-hebrew-audio.mjs"]) {
   execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });
 }
 execFileSync(process.execPath, ["tests/audio-logic.test.mjs"], { stdio: "inherit" });
@@ -59,9 +59,9 @@ if (vercelConfig.cleanUrls === true) throw new Error("cleanUrls must stay disabl
 if (!indexHtml.includes("Hebrew Bible Speaking Trainer")) throw new Error("Existing Hebrew reader must remain at index.html");
 
 for (const forbidden of [/sk-[A-Za-z0-9_-]{20,}/, /sb_secret_[A-Za-z0-9_-]{20,}/]) {
-  for (const file of ["library.js", "audio-admin.js", "api/hebrew-audio.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md"]) {
+  for (const file of ["library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md"]) {
     if (forbidden.test(readFileSync(file, "utf8"))) throw new Error(`Possible secret found in ${file}`);
   }
 }
 
-console.log("Hebrew reader, audio-library, routing, and security checks passed.");
+console.log("Hebrew reader, audio-library, routing, artwork, and security checks passed.");

@@ -1,7 +1,9 @@
 {
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/", "destination": "/library", "permanent": false }
+  ],
   "rewrites": [
-    { "source": "/", "destination": "/library.html" },
     { "source": "/mcp", "destination": "/api/hebrew-mcp" },
     { "source": "/mcp/:path*", "destination": "/api/hebrew-mcp" }
   ],

@@ -54,7 +54,8 @@ for (const table of ["hebrew_book_albums", "hebrew_audio_tracks", "hebrew_audio_
 
 const vercelConfig = JSON.parse(readFileSync("vercel.json", "utf8"));
 const rootRedirect = vercelConfig.redirects?.find((rule) => rule.source === "/");
-if (rootRedirect?.destination !== "/library") throw new Error("Vercel root must open the Scripture Library at /library");
+if (rootRedirect?.destination !== "/library.html") throw new Error("Vercel root must open the Scripture Library at /library.html");
+if (vercelConfig.cleanUrls === true) throw new Error("cleanUrls must stay disabled so /index.html remains the Hebrew reader");
 if (!indexHtml.includes("Hebrew Bible Speaking Trainer")) throw new Error("Existing Hebrew reader must remain at index.html");
 
 for (const forbidden of [/sk-[A-Za-z0-9_-]{20,}/, /sb_secret_[A-Za-z0-9_-]{20,}/]) {

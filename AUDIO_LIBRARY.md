@@ -20,7 +20,7 @@ All are server-side variables. Do not prefix them with `VITE_`, `NEXT_PUBLIC_`, 
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `HEBREW_AUDIO_ADMIN_KEY`
 - Optional: `HEBREW_TTS_MODEL` (defaults to `gpt-4o-mini-tts`)
-- Optional: `HEBREW_TTS_VOICE` (defaults to `ash`)
+- Optional: `HEBREW_TTS_VOICE` (defaults to `cedar`)
 - Optional: `HEBREW_TTS_INSTRUCTIONS`
 
 ## Generate Genesis 1:14

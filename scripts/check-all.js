@@ -7,7 +7,8 @@ const existingReaderFiles = [
 ];
 const audioLibraryFiles = [
   "library.html", "library.css", "library.js", "artwork-fix.js", "audio-admin.html", "audio-admin.js",
-  "assets/genesis-cover.svg", "api/hebrew-audio.js", "AUDIO_LIBRARY.md", "vercel.json",
+  "assets/genesis-cover.svg", "api/hebrew-audio.js", "api/hebrew-mcp.js", "AUDIO_LIBRARY.md", "vercel.json",
+  "src/actions/audio-tools.js", "src/index.js", "src/tool-schemas.js",
   "supabase/migrations/20260717_hebrew_audio_library.sql",
   "supabase/migrations/20260717_hebrew_audio_library_browser_grants.sql",
   "supabase/migrations/20260717_hebrew_audio_library_service_role_grants.sql"
@@ -34,10 +35,31 @@ for (const file of ["library.css", "audio-admin.js"]) {
   if (!adminHtml.includes(file)) throw new Error(`audio-admin.html does not reference ${file}`);
 }
 
-for (const file of [...existingReaderFiles.filter((file) => file.endsWith(".js")), "library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "scripts/generate-hebrew-audio.mjs"]) {
+for (const file of [
+  ...existingReaderFiles.filter((file) => file.endsWith(".js")),
+  "library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
+  "src/actions/audio-tools.js", "src/index.js", "src/tool-schemas.js",
+  "scripts/generate-hebrew-audio.mjs"
+]) {
   execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });
 }
 execFileSync(process.execPath, ["tests/audio-logic.test.mjs"], { stdio: "inherit" });
+
+const requiredAudioTools = [
+  "prepare_hebrew_audio_track",
+  "generate_next_hebrew_audio_segment",
+  "get_hebrew_audio_status"
+];
+const toolSchemas = readFileSync("src/tool-schemas.js", "utf8");
+const toolRegistry = readFileSync("src/index.js", "utf8");
+const mcpHandler = readFileSync("api/hebrew-mcp.js", "utf8");
+for (const tool of requiredAudioTools) {
+  if (!toolSchemas.includes(tool)) throw new Error(`Tool schema is missing ${tool}`);
+  if (!toolRegistry.includes(tool)) throw new Error(`Tool registry is missing ${tool}`);
+}
+for (const tableSuffix of ["_audio_tracks", "_audio_segments"]) {
+  if (!mcpHandler.includes(tableSuffix)) throw new Error(`MCP status is missing ${tableSuffix}`);
+}
 
 const migration = readFileSync("supabase/migrations/20260717_hebrew_audio_library.sql", "utf8");
 for (const table of ["hebrew_book_albums", "hebrew_audio_tracks", "hebrew_audio_segments"]) {
@@ -59,9 +81,12 @@ if (vercelConfig.cleanUrls === true) throw new Error("cleanUrls must stay disabl
 if (!indexHtml.includes("Hebrew Bible Speaking Trainer")) throw new Error("Existing Hebrew reader must remain at index.html");
 
 for (const forbidden of [/sk-[A-Za-z0-9_-]{20,}/, /sb_secret_[A-Za-z0-9_-]{20,}/]) {
-  for (const file of ["library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md"]) {
+  for (const file of [
+    "library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
+    "src/actions/audio-tools.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md"
+  ]) {
     if (forbidden.test(readFileSync(file, "utf8"))) throw new Error(`Possible secret found in ${file}`);
   }
 }
 
-console.log("Hebrew reader, audio-library, routing, artwork, and security checks passed.");
+console.log("Hebrew reader, audio-library, MCP audio pipeline, routing, artwork, and security checks passed.");

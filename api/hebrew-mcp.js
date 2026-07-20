@@ -4,7 +4,9 @@ import { getSupabaseAdminClient } from '../src/supabase-client.js';
 
 const WORD = 'he' + 'brew';
 const STATUS_TOOL = 'get_' + WORD + '_app_status';
-const TABLES = [WORD + '_verses', WORD + '_words', WORD + '_verse_words', WORD + '_lessons'];
+const CORE_TABLES = [WORD + '_verses', WORD + '_words', WORD + '_verse_words', WORD + '_lessons'];
+const AUDIO_TABLES = [WORD + '_book_albums', WORD + '_audio_tracks', WORD + '_audio_segments'];
+const TABLES = [...CORE_TABLES, ...AUDIO_TABLES];
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -82,13 +84,16 @@ async function cleanStatus(input = {}, options = {}) {
   const wordsTable = WORD + '_words';
   const linksTable = WORD + '_verse_words';
   const lessonsTable = WORD + '_lessons';
+  const tracksTable = WORD + '_audio_tracks';
 
   for (const table of TABLES) counts[table] = await countRows(client, table, warnings);
 
   counts.published_lessons = await countRows(client, lessonsTable, warnings, (query) => query.eq('is_published', true));
   counts.draft_lessons = await countRows(client, lessonsTable, warnings, (query) => query.eq('is_published', false));
+  counts.ready_audio_tracks = await countRows(client, tracksTable, warnings, (query) => query.eq('status', 'ready'));
+  counts.published_audio_tracks = await countRows(client, tracksTable, warnings, (query) => query.eq('is_published', true));
 
-  const [lessons, verses] = await Promise.all([
+  const [lessons, verses, audioTracks] = await Promise.all([
     recentRows(
       client,
       lessonsTable,
@@ -117,14 +122,31 @@ async function cleanStatus(input = {}, options = {}) {
         updated_at: verse.updated_at,
       }),
     ),
+    recentRows(
+      client,
+      tracksTable,
+      'id,verse_reference,track_title,status,total_duration_seconds,is_published,published_at,updated_at',
+      limit,
+      warnings,
+      (track) => ({
+        id: track.id,
+        verse_reference: track.verse_reference,
+        track_title: track.track_title,
+        status: track.status,
+        total_duration_seconds: Number(track.total_duration_seconds) || null,
+        is_published: Boolean(track.is_published),
+        published_at: track.published_at,
+        updated_at: track.updated_at,
+      }),
+    ),
   ]);
 
   return {
     ok: warnings.length === 0,
     tool: STATUS_TOOL,
-    tables_reachable: [versesTable, wordsTable, linksTable, lessonsTable].every((table) => counts[table] !== null),
+    tables_reachable: TABLES.every((table) => counts[table] !== null),
     counts,
-    recent: { lessons, verses },
+    recent: { lessons, verses, audio_tracks: audioTracks },
     warnings,
     last_checked: new Date().toISOString(),
   };
@@ -133,7 +155,7 @@ async function cleanStatus(input = {}, options = {}) {
 async function handle(message, options) {
   const id = message?.id ?? null;
   if (message?.method === 'initialize') {
-    return ok(id, { protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: WORD + '-developer-mcp', version: '1.0.0' } });
+    return ok(id, { protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: WORD + '-developer-mcp', version: '1.1.0' } });
   }
   if (message?.method === 'tools/list') return ok(id, { tools: toolList() });
   if (message?.method === 'tools/call') {

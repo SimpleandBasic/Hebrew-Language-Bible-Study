@@ -5,19 +5,16 @@
   const PROXY_PATH = "/api/hebrew-audio-stream?path=";
 
   const audio = document.querySelector("#audioElement");
-  const playButton = document.querySelector("#playPause");
   const status = document.querySelector("#statusCard");
 
-  if (!audio || !playButton) return;
+  if (!audio) return;
 
   audio.setAttribute("playsinline", "");
   audio.setAttribute("webkit-playsinline", "");
   audio.preload = "auto";
 
-  let preparedBlobUrl = "";
-  let sourceToken = 0;
-  let loadingPromise = null;
-  let pendingPlay = false;
+  const nativePlay = audio.play.bind(audio);
+  let sourcePromise = null;
   let internalSourceChange = false;
 
   function setStatus(message, type = "ready") {
@@ -45,108 +42,92 @@
     return `${PROXY_PATH}${encodeURIComponent(path)}`;
   }
 
-  async function prepareSource(rawSource) {
-    const path = pathFromSource(rawSource);
-    if (!validAudioPath(path)) return;
+  function waitUntilPlayable(timeoutMs = 12000) {
+    if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return Promise.resolve();
 
-    const token = ++sourceToken;
-    pendingPlay = false;
-    setStatus("Loading audio section…", "loading");
+    return new Promise((resolve, reject) => {
+      const timer = window.setTimeout(() => finish(new Error("Audio took too long to become playable.")), timeoutMs);
 
-    loadingPromise = (async () => {
-      try {
-        const response = await fetch(proxyUrl(path), {
-          method: "GET",
-          cache: "no-store",
-          headers: { Accept: "audio/mpeg" },
-        });
-
-        if (!response.ok) throw new Error(`Audio request failed (${response.status})`);
-        const blob = await response.blob();
-        if (token !== sourceToken) return;
-        if (!blob.size || !String(blob.type || "").startsWith("audio/")) {
-          throw new Error(`Invalid audio response (${blob.type || "unknown type"}, ${blob.size} bytes)`);
-        }
-
-        if (preparedBlobUrl) URL.revokeObjectURL(preparedBlobUrl);
-        preparedBlobUrl = URL.createObjectURL(blob);
-
-        internalSourceChange = true;
-        audio.src = preparedBlobUrl;
-        audio.load();
-        internalSourceChange = false;
-
-        setStatus("Audio ready. Tap Play.", "ready");
-
-        if (pendingPlay) {
-          pendingPlay = false;
-          try {
-            await audio.play();
-          } catch (error) {
-            console.error("Hebrew audio deferred play failed", error);
-            setStatus("Audio is ready. Tap Play once more.", "error");
-          }
-        }
-      } catch (error) {
-        if (token !== sourceToken) return;
-        const message = error instanceof Error ? error.message : String(error);
-        console.error("Hebrew audio preparation failed", { message, path });
-        setStatus(`Audio could not load: ${message}`, "error");
-      } finally {
-        if (token === sourceToken) loadingPromise = null;
+      function cleanup() {
+        window.clearTimeout(timer);
+        audio.removeEventListener("canplay", onReady);
+        audio.removeEventListener("loadeddata", onReady);
+        audio.removeEventListener("error", onError);
       }
-    })();
 
-    await loadingPromise;
+      function finish(error) {
+        cleanup();
+        if (error) reject(error);
+        else resolve();
+      }
+
+      function onReady() { finish(); }
+      function onError() { finish(new Error("The audio file could not be decoded.")); }
+
+      audio.addEventListener("canplay", onReady, { once: true });
+      audio.addEventListener("loadeddata", onReady, { once: true });
+      audio.addEventListener("error", onError, { once: true });
+    });
   }
 
-  const observer = new MutationObserver(() => {
-    if (internalSourceChange) return;
+  async function prepareCurrentSource() {
     const current = audio.getAttribute("src") || "";
-    if (!pathFromSource(current)) return;
-    void prepareSource(current);
-  });
+    const path = pathFromSource(current);
+    if (!validAudioPath(path)) return;
 
-  observer.observe(audio, { attributes: true, attributeFilter: ["src"] });
-
-  document.addEventListener("click", async (event) => {
-    const control = event.target.closest("#playPause");
-    if (!control) return;
-
-    event.preventDefault();
-    event.stopImmediatePropagation();
-
-    if (!audio.getAttribute("src")) {
-      setStatus("Choose an audio lesson first.", "error");
-      return;
+    const desired = proxyUrl(path);
+    if (current !== desired) {
+      internalSourceChange = true;
+      audio.setAttribute("src", desired);
+      audio.load();
+      internalSourceChange = false;
     }
 
-    if (!audio.paused) {
-      audio.pause();
-      return;
-    }
+    setStatus("Buffering audio…", "loading");
+    await waitUntilPlayable();
+    setStatus("Audio ready.", "ready");
+  }
 
-    if (loadingPromise) {
-      pendingPlay = true;
-      setStatus("Finishing the audio download…", "loading");
-      return;
+  function ensureCurrentSource() {
+    if (!sourcePromise) {
+      sourcePromise = prepareCurrentSource().finally(() => { sourcePromise = null; });
     }
+    return sourcePromise;
+  }
 
+  audio.play = async function playHebrewAudio() {
     try {
-      setStatus("Starting audio…", "loading");
-      await audio.play();
+      await ensureCurrentSource();
+      const result = await nativePlay();
       setStatus("Audio is playing.", "ready");
+      return result;
     } catch (error) {
       const name = error instanceof Error ? error.name : "PlaybackError";
       const message = error instanceof Error ? error.message : String(error);
       console.error("Hebrew audio play failed", { name, message, src: audio.currentSrc || audio.src });
-      setStatus(`Audio could not start (${name}). Tap Play once more.`, "error");
+      setStatus(`Audio could not start: ${message}`, "error");
+      throw error;
     }
-  }, true);
+  };
 
-  audio.addEventListener("canplay", () => setStatus("Audio ready. Tap Play.", "ready"));
+  const observer = new MutationObserver(() => {
+    if (internalSourceChange) return;
+    const current = audio.getAttribute("src") || "";
+    const path = pathFromSource(current);
+    if (!validAudioPath(path)) return;
+    void ensureCurrentSource().catch((error) => {
+      console.error("Hebrew audio source preparation failed", error);
+      setStatus(`Audio could not load: ${error.message}`, "error");
+    });
+  });
+
+  observer.observe(audio, { attributes: true, attributeFilter: ["src"] });
+
+  audio.addEventListener("loadstart", () => setStatus("Loading audio…", "loading"));
+  audio.addEventListener("waiting", () => setStatus("Buffering audio…", "loading"));
+  audio.addEventListener("canplay", () => setStatus("Audio ready.", "ready"));
   audio.addEventListener("playing", () => setStatus("Audio is playing.", "ready"));
-  audio.addEventListener("stalled", () => setStatus("Audio paused while loading. Tap Play to retry.", "error"));
+  audio.addEventListener("stalled", () => setStatus("The connection paused. Tap Play to resume.", "error"));
   audio.addEventListener("error", (event) => {
     event.stopImmediatePropagation();
     const codes = {
@@ -163,8 +144,4 @@
     });
     setStatus(`${detail}. Tap Play to retry.`, "error");
   }, true);
-
-  window.addEventListener("pagehide", () => {
-    if (preparedBlobUrl) URL.revokeObjectURL(preparedBlobUrl);
-  });
 })();

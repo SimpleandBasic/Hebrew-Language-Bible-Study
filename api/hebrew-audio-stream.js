@@ -5,7 +5,7 @@ function copyHeader(upstream, response, name) {
   if (value) response.setHeader(name, value);
 }
 
-module.exports = async function handler(request, response) {
+export default async function handler(request, response) {
   if (request.method === "OPTIONS") {
     response.setHeader("Access-Control-Allow-Origin", "*");
     response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
@@ -69,4 +69,4 @@ module.exports = async function handler(request, response) {
     });
     return response.status(502).json({ error: "The Hebrew audio stream could not be loaded." });
   }
-};
+}

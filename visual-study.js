@@ -238,18 +238,42 @@
     showScreen("explore");
     requestAnimationFrame(renderFeed);
   });
-  el.miniPrevious.addEventListener("click", () => el.previous.click());
-  el.miniNext.addEventListener("click", () => el.next.click());
-  el.miniPlay.addEventListener("click", () => el.playPause.click());
-  el.audio.addEventListener("play", updateMiniPlayer);
+  let miniPauseRequested = false;
+  const clearMiniPauseRequest = () => { miniPauseRequested = false; };
+  el.miniPrevious.addEventListener("click", () => { clearMiniPauseRequest(); el.previous.click(); });
+  el.miniNext.addEventListener("click", () => { clearMiniPauseRequest(); el.next.click(); });
+  el.miniPlay.addEventListener("click", () => {
+    const playIsRequested = el.audio.paused && el.miniPlay.getAttribute("aria-label") === "Play";
+    if (playIsRequested) {
+      clearMiniPauseRequest();
+      el.playPause.click();
+      return;
+    }
+    miniPauseRequested = true;
+    el.audio.pause();
+    window.setTimeout(() => { if (miniPauseRequested && !el.audio.paused) el.audio.pause(); }, 100);
+  });
+  document.querySelector(".mini-open-player")?.addEventListener("click", clearMiniPauseRequest);
+  el.audio.addEventListener("play", () => {
+    if (miniPauseRequested) { el.audio.pause(); return; }
+    updateMiniPlayer();
+  });
   el.audio.addEventListener("pause", updateMiniPlayer);
   el.audio.addEventListener("ended", updateMiniPlayer);
   el.dialogClose.addEventListener("click", closeDetails);
   el.dialog.addEventListener("click", (event) => { if (event.target === el.dialog) closeDetails(); });
 
-  new MutationObserver(() => { updateExploreButton(); updateMiniPlayer(); }).observe(document.body, {
-    subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["disabled", "hidden"],
-  });
+  const refreshPlayerUi = () => { updateExploreButton(); updateMiniPlayer(); };
+  const observeText = (node) => {
+    if (node) new MutationObserver(refreshPlayerUi).observe(node, { childList: true, subtree: true, characterData: true });
+  };
+  observeText(el.playerReference);
+  observeText(el.sectionLabel);
+  observeText(el.segmentCounter);
+  if (el.previous) new MutationObserver(updateMiniPlayer).observe(el.previous, { attributes: true, attributeFilter: ["disabled"] });
+  if (el.next) new MutationObserver(updateMiniPlayer).observe(el.next, { attributes: true, attributeFilter: ["disabled"] });
+  const playerScreen = document.querySelector("#playerScreen");
+  if (playerScreen) new MutationObserver(refreshPlayerUi).observe(playerScreen, { attributes: true, attributeFilter: ["hidden"] });
 
   updateExploreButton();
   updateMiniPlayer();

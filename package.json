@@ -1,13 +1,13 @@
 {
   "name": "hebrew-language-bible-study",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "private": true,
-  "description": "GitHub Pages Hebrew reader with Vercel-hosted MCP and audio-library services.",
+  "description": "GitHub Pages Hebrew reader with Vercel-hosted MCP, audio-library, and visual-study services.",
   "scripts": {
     "postinstall": "node scripts/check-all.js",
     "check": "node scripts/check-all.js",
-    "test": "node tests/audio-logic.test.mjs"
+    "test": "node tests/audio-logic.test.mjs && node --test tests/visual-study-logic.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "latest"

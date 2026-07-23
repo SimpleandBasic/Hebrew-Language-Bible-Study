@@ -1,0 +1,236 @@
+/* Genesis 1:14 immersive visual exploration */
+.visual-immersive-enabled #exploreScreen {
+  --visual-glass: rgba(16, 13, 10, 0.82);
+  --visual-glass-strong: rgba(13, 10, 8, 0.95);
+}
+
+.visual-immersive-enabled .explore-header {
+  padding: 10px 4px 20px;
+}
+
+.visual-immersive-enabled .explore-header h2 {
+  max-width: 760px;
+  text-wrap: balance;
+}
+
+.visual-chapter-rail {
+  position: sticky;
+  top: calc(76px + env(safe-area-inset-top));
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 22px;
+  padding: 10px 12px;
+  border: 1px solid rgba(239, 198, 116, 0.22);
+  border-radius: 18px;
+  background: rgba(18, 15, 11, 0.82);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(18px);
+}
+
+.visual-chapter-rail-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.visual-chapter-rail-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.visual-chapter-rail button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.visual-chapter-rail button.is-active {
+  transform: scale(1.08);
+  border-color: rgba(239, 198, 116, 0.75);
+  background: linear-gradient(145deg, #f5d58f, #c99243);
+  color: #1b140b;
+}
+
+.visual-immersive-enabled .visual-feed {
+  gap: 34px;
+  scroll-snap-type: y proximity;
+}
+
+.visual-immersive-enabled .visual-card.immersive-visual-card {
+  scroll-margin-top: calc(140px + env(safe-area-inset-top));
+  scroll-snap-align: start;
+  overflow: hidden;
+  border-radius: 32px;
+  border-color: rgba(255, 240, 211, 0.16);
+  background: #100d0a;
+  box-shadow: 0 28px 86px rgba(0, 0, 0, 0.52);
+  isolation: isolate;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.visual-immersive-enabled .visual-card.immersive-visual-card.is-visual-active {
+  border-color: rgba(239, 198, 116, 0.42);
+  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.64), 0 0 0 1px rgba(239, 198, 116, 0.06);
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-media {
+  position: relative;
+  min-height: 0;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #111;
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(5, 6, 9, 0.08) 35%, rgba(12, 9, 7, 0.28) 68%, rgba(12, 9, 7, 0.96) 100%),
+    radial-gradient(circle at 50% 14%, transparent 44%, rgba(4, 3, 3, 0.28) 100%);
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-media img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  transform: scale(1.002);
+  transition: transform 900ms cubic-bezier(.2,.7,.2,1), filter 240ms ease;
+}
+
+.visual-immersive-enabled .immersive-visual-card.is-visual-active .visual-card-media img {
+  transform: scale(1.025);
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-copy {
+  position: relative;
+  z-index: 2;
+  margin-top: -190px;
+  padding: 142px 22px 24px;
+  background: linear-gradient(180deg, rgba(13, 10, 8, 0) 0%, var(--visual-glass-strong) 128px, #100d0a 100%);
+}
+
+.visual-step-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border: 1px solid rgba(239, 198, 116, 0.34);
+  border-radius: 999px;
+  background: rgba(15, 12, 9, 0.66);
+  color: var(--gold);
+  font-size: 0.69rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(10px);
+}
+
+.visual-immersive-enabled .immersive-visual-card h3 {
+  margin-top: 7px;
+  font-size: clamp(1.8rem, 8vw, 3rem);
+  text-wrap: balance;
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-summary {
+  color: rgba(255, 247, 232, 0.9);
+  font-size: 1.05rem;
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-body {
+  color: var(--muted);
+}
+
+.visual-immersive-enabled .immersive-visual-card .why-it-matters {
+  background: rgba(239, 198, 116, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 13px 15px;
+  border-color: rgba(239, 198, 116, 0.24);
+  background: linear-gradient(135deg, rgba(239, 198, 116, 0.13), rgba(255, 255, 255, 0.035));
+}
+
+.visual-immersive-enabled .immersive-visual-card .visual-card-details::after {
+  content: "→";
+  color: var(--gold);
+  font-size: 1.25rem;
+}
+
+.visual-immersive-enabled .dialog-media {
+  aspect-ratio: 4 / 5;
+  min-height: 0;
+}
+
+.visual-immersive-enabled .dialog-media img {
+  width: 100%;
+  height: 100%;
+  max-height: 72dvh;
+  object-fit: cover;
+}
+
+@media (min-width: 760px) {
+  .visual-immersive-enabled .visual-feed {
+    gap: 44px;
+  }
+
+  .visual-immersive-enabled .immersive-visual-card .visual-card-media {
+    aspect-ratio: 16 / 10;
+  }
+
+  .visual-immersive-enabled .immersive-visual-card .visual-card-copy {
+    margin-top: -220px;
+    padding: 160px 34px 32px;
+  }
+}
+
+@media (max-width: 430px) {
+  .visual-chapter-rail-label {
+    display: none;
+  }
+
+  .visual-chapter-rail {
+    justify-content: center;
+  }
+
+  .visual-immersive-enabled .immersive-visual-card .visual-card-copy {
+    margin-top: -170px;
+    padding: 128px 18px 21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visual-chapter-rail button,
+  .visual-immersive-enabled .visual-card.immersive-visual-card,
+  .visual-immersive-enabled .immersive-visual-card .visual-card-media img {
+    transition: none;
+  }
+
+  .visual-immersive-enabled .immersive-visual-card.is-visual-active .visual-card-media img {
+    transform: none;
+  }
+}

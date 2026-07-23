@@ -3,11 +3,11 @@
   "version": "1.2.0",
   "type": "module",
   "private": true,
-  "description": "GitHub Pages Hebrew reader with Vercel-hosted MCP, audio library, and additive visual study feeds.",
+  "description": "GitHub Pages Hebrew reader with Vercel-hosted MCP, audio-library, and visual-study services.",
   "scripts": {
     "postinstall": "node scripts/check-all.js",
     "check": "node scripts/check-all.js",
-    "test": "node --test tests/audio-logic.test.mjs tests/visual-study-logic.test.mjs"
+    "test": "node tests/audio-logic.test.mjs && node --test tests/visual-study-logic.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "latest"

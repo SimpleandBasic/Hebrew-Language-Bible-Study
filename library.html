@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#17120d" />
     <title>Hebrew Scripture Library</title>
     <link rel="preconnect" href="https://cmryhxnhnltrewvduico.supabase.co" crossorigin />
-    <link rel="stylesheet" href="library.css?v=20260722-visual-v2" />
+    <link rel="stylesheet" href="library.css?v=20260722-visual-v2-1" />
   </head>
   <body>
     <div class="app-frame">
@@ -128,26 +128,55 @@
             <p id="visualFeedSubtitle">See the world, language, and connections behind the passage.</p>
           </header>
 
-          <div id="visualFeedList" class="visual-feed" aria-live="polite"></div>
-          <section id="visualFeedEmpty" class="visual-empty" hidden>
-            <p class="eyebrow">Preparing Visuals</p>
-            <h3>The audio lesson is ready.</h3>
-            <p>The visual cards are still being assembled and verified.</p>
+          <section id="visualFeedLoading" class="visual-state" role="status" hidden>
+            <div class="visual-loading-art" aria-hidden="true"></div>
+            <p class="eyebrow">Loading Visual Study</p>
+            <h3>Gathering the cards…</h3>
+            <p>Your audio keeps playing while the study opens.</p>
           </section>
 
-          <aside id="exploreMiniPlayer" class="explore-mini-player" aria-label="Now playing">
-            <div class="mini-transport" aria-label="Visual feed audio controls">
-              <button id="explorePreviousSegment" class="mini-skip" type="button" aria-label="Previous section">⏮</button>
-              <button id="explorePlayPause" class="mini-play" type="button" aria-label="Play">▶</button>
-              <button id="exploreNextSegment" class="mini-skip" type="button" aria-label="Next section">⏭</button>
-            </div>
+          <div id="visualFeedList" class="visual-feed" aria-live="polite"></div>
+
+          <section id="visualFeedEmpty" class="visual-state" hidden>
+            <p class="eyebrow">Preparing Visuals</p>
+            <h3 id="visualFeedEmptyTitle">The audio lesson is ready.</h3>
+            <p id="visualFeedEmptyMessage">The visual cards are still being assembled and verified.</p>
+          </section>
+
+          <section id="visualFeedError" class="visual-state visual-state-error" role="alert" hidden>
+            <p class="eyebrow">Visual Study Unavailable</p>
+            <h3>The audio lesson is still safe.</h3>
+            <p>The visual tables could not be reached. Keep listening and try Explore again later.</p>
+          </section>
+
+          <aside class="explore-mini-player" aria-label="Now playing">
+            <button id="explorePreviousSegment" class="mini-skip" type="button" aria-label="Previous section">⏮</button>
+            <button id="explorePlayPause" class="mini-play" type="button" aria-label="Play">▶</button>
             <div class="mini-player-copy">
               <strong id="exploreNowTitle">Audio lesson</strong>
               <span id="exploreNowSection">Current section</span>
             </div>
+            <button id="exploreNextSegment" class="mini-skip" type="button" aria-label="Next section">⏭</button>
             <button class="mini-open-player" data-go="player" type="button">Full player</button>
           </aside>
         </section>
+
+        <dialog id="visualCardDialog" class="visual-card-dialog" aria-labelledby="visualCardDialogTitle">
+          <button id="visualCardDialogClose" class="dialog-close" type="button" aria-label="Close card details">×</button>
+          <div id="visualCardDialogMedia" class="dialog-media"></div>
+          <div class="dialog-copy">
+            <p id="visualCardDialogEyebrow" class="eyebrow">Visual Bible Study</p>
+            <h2 id="visualCardDialogTitle">Card details</h2>
+            <p id="visualCardDialogSummary" class="dialog-summary"></p>
+            <div id="visualCardDialogBody"></div>
+            <div id="visualCardDialogWhy" class="why-it-matters"></div>
+            <div class="dialog-evidence-row">
+              <span id="visualCardDialogEvidence" class="evidence-badge"></span>
+              <span id="visualCardDialogRequirement" class="requirement-badge"></span>
+            </div>
+            <section id="visualCardDialogSources" class="dialog-sources"></section>
+          </div>
+        </dialog>
 
         <section class="status-card" id="statusCard" role="status">Connecting to the Hebrew library…</section>
       </main>
@@ -161,7 +190,7 @@
     <script src="supabase-config.js?v=20260630-2"></script>
     <script src="artwork-fix.js?v=20260722-1"></script>
     <script src="audio-player-fix.js?v=20260721-3"></script>
-    <script src="library.js?v=20260722-visual-v2"></script>
-    <script src="visual-study.js?v=20260722-visual-v2"></script>
+    <script src="library.js?v=20260717-1"></script>
+    <script src="visual-study.js?v=20260722-visual-v2-1"></script>
   </body>
 </html>

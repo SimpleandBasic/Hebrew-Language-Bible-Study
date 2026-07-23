@@ -31,7 +31,9 @@ test("Explore is present for every opened audio lesson", () => {
 
 test("Explore and card details reuse the one existing audio element", () => {
   assert.equal((html.match(/<audio id="audioElement"/g) || []).length, 1);
-  assert.match(js, /el\.miniPlay\.addEventListener\("click", \(\) => el\.playPause\.click\(\)\)/);
+  assert.match(js, /let miniPauseRequested = false/);
+  assert.match(js, /el\.audio\.pause\(\)/);
+  assert.match(js, /el\.playPause\.click\(\)/);
   assert.match(js, /function openDetails/);
   assert.match(html, /id="visualCardDialog"/);
 });

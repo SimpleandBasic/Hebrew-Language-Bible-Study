@@ -6,14 +6,19 @@ const existingReaderFiles = [
   "script.js", "data-loader.js", "bible-reader-v2.js", "unified-app.js", "supabase-config.js"
 ];
 const audioLibraryFiles = [
-  "library.html", "library.css", "library.js", "artwork-fix.js", "audio-admin.html", "audio-admin.js",
+  "library.html", "library.css", "library.js", "artwork-fix.js", "audio-player-fix.js", "audio-admin.html", "audio-admin.js",
   "assets/genesis-cover.svg", "api/hebrew-audio.js", "api/hebrew-mcp.js", "AUDIO_LIBRARY.md", "vercel.json",
   "src/actions/audio-tools.js", "src/index.js", "src/tool-schemas.js",
   "supabase/migrations/20260717_hebrew_audio_library.sql",
   "supabase/migrations/20260717_hebrew_audio_library_browser_grants.sql",
   "supabase/migrations/20260717_hebrew_audio_library_service_role_grants.sql"
 ];
-const requiredFiles = [...existingReaderFiles, ...audioLibraryFiles];
+const visualStudyFiles = [
+  "scripts/check-visual-study.mjs",
+  "tests/visual-study-logic.test.mjs",
+  "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2.sql"
+];
+const requiredFiles = [...existingReaderFiles, ...audioLibraryFiles, ...visualStudyFiles];
 
 for (const file of requiredFiles) {
   if (!existsSync(file)) throw new Error(`Missing required app file: ${file}`);
@@ -27,7 +32,7 @@ for (const file of existingReaderFiles.filter((file) => file !== "index.html")) 
 }
 
 const libraryHtml = readFileSync("library.html", "utf8");
-for (const file of ["library.css", "library.js", "artwork-fix.js", "supabase-config.js", "assets/genesis-cover.svg"]) {
+for (const file of ["library.css", "library.js", "artwork-fix.js", "audio-player-fix.js", "supabase-config.js", "assets/genesis-cover.svg"]) {
   if (!libraryHtml.includes(file)) throw new Error(`library.html does not reference ${file}`);
 }
 const adminHtml = readFileSync("audio-admin.html", "utf8");
@@ -37,13 +42,15 @@ for (const file of ["library.css", "audio-admin.js"]) {
 
 for (const file of [
   ...existingReaderFiles.filter((file) => file.endsWith(".js")),
-  "library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
+  "library.js", "artwork-fix.js", "audio-player-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
   "src/actions/audio-tools.js", "src/index.js", "src/tool-schemas.js",
-  "scripts/generate-hebrew-audio.mjs"
+  "scripts/generate-hebrew-audio.mjs", "scripts/check-visual-study.mjs"
 ]) {
   execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });
 }
 execFileSync(process.execPath, ["tests/audio-logic.test.mjs"], { stdio: "inherit" });
+execFileSync(process.execPath, ["--test", "tests/visual-study-logic.test.mjs"], { stdio: "inherit" });
+execFileSync(process.execPath, ["scripts/check-visual-study.mjs"], { stdio: "inherit" });
 
 const requiredAudioTools = [
   "prepare_hebrew_audio_track",
@@ -82,11 +89,11 @@ if (!indexHtml.includes("Hebrew Bible Speaking Trainer")) throw new Error("Exist
 
 for (const forbidden of [/sk-[A-Za-z0-9_-]{20,}/, /sb_secret_[A-Za-z0-9_-]{20,}/]) {
   for (const file of [
-    "library.js", "artwork-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
+    "library.js", "artwork-fix.js", "audio-player-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
     "src/actions/audio-tools.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md"
   ]) {
     if (forbidden.test(readFileSync(file, "utf8"))) throw new Error(`Possible secret found in ${file}`);
   }
 }
 
-console.log("Hebrew reader, audio-library, MCP audio pipeline, routing, artwork, and security checks passed.");
+console.log("Hebrew reader, audio library, MCP audio pipeline, visual study v2, routing, artwork, and security checks passed.");

@@ -78,7 +78,7 @@ async function runGeneration(origin, job, jobId, client) {
       client,
       jobId,
       'lesson_draft',
-      isShortDraft ? 'retrying' : 'failed',
+      isShortDraft ? 'info' : 'failed',
       message,
       { draft_attempt: draftAttempt, retryable: isShortDraft },
     );

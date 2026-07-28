@@ -33,9 +33,10 @@ export function spokenReadabilityReport(transcript) {
 }
 
 export function normalizeStyleEvaluation(raw) {
+  const source = raw?.scores && typeof raw.scores === 'object' ? raw.scores : raw || {};
   const scores = {};
   for (const key of STYLE_SCORE_KEYS) {
-    const value = Number(raw?.scores?.[key]);
+    const value = Number(source?.[key]);
     scores[key] = Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 0;
   }
   const values = Object.values(scores);

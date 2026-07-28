@@ -3,6 +3,7 @@ import { getSupabaseAdminClient } from '../src/supabase-client.js';
 export const maxDuration = 300;
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
+const MAX_DRAFT_ATTEMPTS = 4;
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -31,6 +32,61 @@ async function updateJob(client, jobId, patch) {
     .single();
   if (error) throw error;
   return data;
+}
+
+async function runGeneration(origin, job, jobId, client) {
+  let lastResult = {};
+  let lastStatus = 500;
+
+  for (let draftAttempt = 1; draftAttempt <= MAX_DRAFT_ATTEMPTS; draftAttempt += 1) {
+    await addEvent(
+      client,
+      jobId,
+      'lesson_draft',
+      'started',
+      `Lesson draft attempt ${draftAttempt} of ${MAX_DRAFT_ATTEMPTS} started.`,
+      { draft_attempt: draftAttempt, max_draft_attempts: MAX_DRAFT_ATTEMPTS },
+    );
+
+    const generationResponse = await fetch(`${origin}/api/generate-next-verse`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-hebrew-generation-job-id': jobId,
+      },
+      body: JSON.stringify({ job_id: jobId, mode: job.mode, requested_reference: job.requested_reference }),
+    });
+    const result = await generationResponse.json().catch(() => ({}));
+    lastResult = result;
+    lastStatus = generationResponse.status;
+
+    if (generationResponse.ok && result.ok) {
+      await addEvent(
+        client,
+        jobId,
+        'lesson_draft',
+        'completed',
+        `Lesson draft attempt ${draftAttempt} passed all quality gates.`,
+        { draft_attempt: draftAttempt, transcript_word_count: result.transcript_word_count },
+      );
+      return result;
+    }
+
+    const message = result?.error || `Generation pipeline failed (${generationResponse.status}).`;
+    const isShortDraft = /transcript is too short/i.test(message);
+    await addEvent(
+      client,
+      jobId,
+      'lesson_draft',
+      isShortDraft ? 'retrying' : 'failed',
+      message,
+      { draft_attempt: draftAttempt, retryable: isShortDraft },
+    );
+
+    if (!isShortDraft) throw new Error(message);
+  }
+
+  throw new Error(lastResult?.error || `Generation pipeline failed (${lastStatus}).`);
 }
 
 export default async function handler(req, res) {
@@ -69,19 +125,7 @@ export default async function handler(req, res) {
     await addEvent(client, jobId, 'pipeline_started', 'started', 'Production generation pipeline started.');
 
     const origin = `https://${req.headers.host}`;
-    const generationResponse = await fetch(`${origin}/api/generate-next-verse`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-hebrew-generation-job-id': jobId,
-      },
-      body: JSON.stringify({ job_id: jobId, mode: job.mode, requested_reference: job.requested_reference }),
-    });
-    const result = await generationResponse.json().catch(() => ({}));
-
-    if (!generationResponse.ok || !result.ok) {
-      throw new Error(result?.error || `Generation pipeline failed (${generationResponse.status}).`);
-    }
+    const result = await runGeneration(origin, job, jobId, client);
 
     const completed = await updateJob(client, jobId, {
       status: 'succeeded',

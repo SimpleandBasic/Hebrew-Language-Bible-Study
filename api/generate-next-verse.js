@@ -1,10 +1,17 @@
 import { getSupabaseAdminClient } from '../src/supabase-client.js';
+import {
+  EXPERIENCE_FORMAT_VERSION,
+  MAX_STYLE_REWRITES,
+  assertExperienceQuality,
+  normalizeStyleEvaluation,
+  spokenReadabilityReport,
+} from '../src/hebrew-sermon-quality.js';
 
 export const maxDuration = 300;
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const GENESIS_VERSE_COUNTS = [0,31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26];
-const FORMAT_VERSION = 'holy-curiosity-symbiotic-sermon-v2';
+const FORMAT_VERSION = EXPERIENCE_FORMAT_VERSION;
 const MIN_TRANSCRIPT_WORDS = 1100;
 const TARGET_TRANSCRIPT_WORDS = '1,350 to 1,550';
 
@@ -49,28 +56,19 @@ async function getLatestScriptureReference(client) {
     .order('lesson_order', { ascending: false })
     .limit(100);
   if (error) throw error;
-
-  const parsedLessons = (lessons || [])
-    .map((lesson) => referenceFromLesson(lesson))
-    .filter(Boolean)
+  const parsedLessons = (lessons || []).map(referenceFromLesson).filter(Boolean)
     .sort((a, b) => a.chapter - b.chapter || a.verse - b.verse);
-
   return parsedLessons.at(-1) || { chapter: 1, verse: 0 };
 }
 
 async function fetchCanonicalVerse(reference) {
   const sefariaRef = reference.replace('Genesis ', 'Genesis.').replace(':', '.');
-  const response = await fetch(`https://www.sefaria.org/api/texts/${encodeURIComponent(sefariaRef)}?context=0&commentary=0`, {
-    headers: { accept: 'application/json' },
-  });
+  const response = await fetch(`https://www.sefaria.org/api/texts/${encodeURIComponent(sefariaRef)}?context=0&commentary=0`, { headers: { accept: 'application/json' } });
   if (!response.ok) throw new Error(`Canonical text lookup failed (${response.status}).`);
   const data = await response.json();
   const hebrew = Array.isArray(data.he) ? data.he[0] : data.he;
   if (!hebrew) throw new Error(`Hebrew text was not returned for ${reference}.`);
-
-  const kjvResponse = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}?translation=kjv`, {
-    headers: { accept: 'application/json' },
-  });
+  const kjvResponse = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}?translation=kjv`, { headers: { accept: 'application/json' } });
   if (!kjvResponse.ok) throw new Error(`KJV text lookup failed (${kjvResponse.status}).`);
   const kjvData = await kjvResponse.json();
   const english = String(kjvData.text || '').trim();
@@ -90,30 +88,21 @@ function validateLesson(lesson) {
   ];
   const missing = requiredStrings.filter((key) => !String(lesson?.[key] || '').trim());
   if (missing.length) throw new Error(`Generated lesson failed required fields: ${missing.join(', ')}.`);
-
   const wordCount = transcriptWordCount(lesson);
   if (wordCount < MIN_TRANSCRIPT_WORDS) throw new Error(`Generated transcript is too short (${wordCount} words; minimum ${MIN_TRANSCRIPT_WORDS}).`);
   if (!Array.isArray(lesson.key_words) || lesson.key_words.length < 4) throw new Error('Generated lesson needs at least four integrated Hebrew key words.');
   if (!Array.isArray(lesson.strongs_word_stories) || lesson.strongs_word_stories.length < 3) throw new Error('Generated lesson needs at least three Strong’s word stories.');
   if (!Array.isArray(lesson.cross_references) || lesson.cross_references.length < 4) throw new Error('Generated lesson needs at least four responsible cross references.');
-  if (!lesson.did_you_know_see_jesus_here?.did_you_know || !lesson.did_you_know_see_jesus_here?.see_jesus_here || !lesson.did_you_know_see_jesus_here?.guardrail) {
-    throw new Error('Generated lesson needs Did You Know, See Jesus Here, and an explicit interpretive guardrail.');
-  }
+  if (!lesson.did_you_know_see_jesus_here?.did_you_know || !lesson.did_you_know_see_jesus_here?.see_jesus_here || !lesson.did_you_know_see_jesus_here?.guardrail) throw new Error('Generated lesson needs Did You Know, See Jesus Here, and an explicit interpretive guardrail.');
   if (!lesson.series_connection?.previous || !lesson.series_connection?.next) throw new Error('Generated lesson must connect to the previous verse and anticipate the next verse.');
   return { wordCount };
 }
 
-async function requestLessonJson(apiKey, model, messages) {
+async function requestJson(apiKey, model, messages, temperature = 0.7) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      temperature: 0.7,
-      max_tokens: 7000,
-      response_format: { type: 'json_object' },
-      messages,
-    }),
+    body: JSON.stringify({ model, temperature, max_tokens: 7000, response_format: { type: 'json_object' }, messages }),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload?.error?.message || `Lesson generation failed (${response.status}).`);
@@ -125,31 +114,63 @@ async function requestLessonJson(apiKey, model, messages) {
 async function repairShortTranscript(lesson, reference, apiKey, model) {
   const currentWords = transcriptWordCount(lesson);
   if (currentWords >= MIN_TRANSCRIPT_WORDS) return lesson;
-
-  const repaired = await requestLessonJson(apiKey, model, [
-    {
-      role: 'system',
-      content: 'You are a careful Christian Hebrew Bible editor. Return valid JSON only. Preserve factual accuracy, reverence, supplied Scripture, and every required field.',
-    },
-    {
-      role: 'user',
-      content: `Repair this ${reference} lesson because its transcript is only ${currentWords} words.
-
-HARD WORD-COUNT CONTRACT:
-- Rewrite and expand the transcript to ${TARGET_TRANSCRIPT_WORDS} words.
-- The transcript must never be below ${MIN_TRANSCRIPT_WORDS} words.
-- Silently count the transcript before returning JSON.
-- If it is below ${MIN_TRANSCRIPT_WORDS}, continue writing before returning.
-- Preserve the same central truth, Hebrew details, theology, KJV wording, tone, prayer, applications, and responsible Jesus guardrail.
-- Add meaningful scene-setting, Hebrew explanation, biblical connections, application, transitions, and sermon development. Do not pad with repetition.
-- Return the complete lesson JSON object, not only the transcript.
-
-LESSON TO REPAIR:
-${JSON.stringify(lesson)}`,
-    },
+  const repaired = await requestJson(apiKey, model, [
+    { role: 'system', content: 'You are a careful Christian Hebrew Bible editor. Return valid JSON only. Preserve accuracy, reverence, Scripture, and every field.' },
+    { role: 'user', content: `Rewrite and expand this complete ${reference} lesson transcript to ${TARGET_TRANSCRIPT_WORDS} words, never below ${MIN_TRANSCRIPT_WORDS}. Preserve the theology, Hebrew details, Scripture wording, central truth, prayer, applications, and responsible Jesus guardrail. Add meaningful scenes, discoveries, transitions, and application without padding. Return the complete lesson JSON.\n\n${JSON.stringify(lesson)}` },
   ]);
   repaired.format_version = FORMAT_VERSION;
   return repaired;
+}
+
+function styleJudgePrompt(reference, lesson, readability) {
+  return `Evaluate this ${reference} Christian Hebrew audio sermon as a strict executive producer. Score the actual listening experience, not the presence of fields.
+
+A publishable lesson must have: an immediate cold open; one continuous story-driven sermon; one controlling truth; at least four real curiosity turns; Hebrew taught naturally through images and recurring biblical scenes; one to three gentle observational humor moments; deep ideas in fifth-grade language; emotional movement from wonder to discovery to meaning to personal significance to worship to anticipation; one everyday human moment; one concrete action; a responsible Jesus bridge that names its connection type; and a memorable ending with prayer, memory line, and next-verse anticipation. It must sound natural aloud, not like notes, a lecture, or generic AI writing.
+
+Return JSON only with scores from 0 to 10 for opening_hook, storytelling, entertainment, wonder, natural_humor, clarity, emotional_movement, hebrew_integration, spoken_flow, jesus_connection, memorable_ending; plus strengths, required_changes, and verdict. An 8 means genuinely publishable.
+
+Readability report: ${JSON.stringify(readability)}
+Lesson: ${JSON.stringify(lesson)}`;
+}
+
+function styleRewritePrompt(reference, lesson, evaluation) {
+  return `Rewrite this complete ${reference} lesson so it passes the permanent entertaining-sermon gate. Return the full JSON object with every field.
+
+Keep Scripture, Hebrew, theology, and responsible interpretation accurate and reverent. Transcript target is ${TARGET_TRANSCRIPT_WORDS} words and must never be below ${MIN_TRANSCRIPT_WORDS}.
+
+Make the corrections visible: open inside a vivid or relatable moment; use one controlling image or truth; include at least four discoveries; weave Hebrew into the story; include one to three gentle observational humor moments; explain deep ideas in fifth-grade language; move through wonder, discovery, meaning, personal significance, worship, and anticipation; include an everyday human moment and concrete action; identify the Jesus connection type; and finish with a memorable line, action, prayer, memory phrase, and next-verse hook. Write for ears, with no lecture transitions, information dump, or repetitive AI phrasing.
+
+Producer evaluation: ${JSON.stringify(evaluation)}
+Lesson to rewrite: ${JSON.stringify(lesson)}`;
+}
+
+async function enforceExperienceGate(lesson, reference, apiKey, model) {
+  let candidate = lesson;
+  let evaluation;
+  let readability;
+  for (let attempt = 0; attempt <= MAX_STYLE_REWRITES; attempt += 1) {
+    candidate = await repairShortTranscript(candidate, reference, apiKey, model);
+    validateLesson(candidate);
+    readability = spokenReadabilityReport(candidate.transcript);
+    const rawEvaluation = await requestJson(apiKey, model, [
+      { role: 'system', content: 'You are a strict sermon and audio-program quality evaluator. Return valid JSON only.' },
+      { role: 'user', content: styleJudgePrompt(reference, candidate, readability) },
+    ], 0.1);
+    evaluation = normalizeStyleEvaluation(rawEvaluation);
+    if (evaluation.passed && readability.passed) {
+      candidate.experience_quality = { ...evaluation, readability, rewrite_count: attempt, evaluated_at: new Date().toISOString() };
+      candidate.format_version = FORMAT_VERSION;
+      return { lesson: candidate, evaluation, readability, rewriteCount: attempt };
+    }
+    if (attempt < MAX_STYLE_REWRITES) {
+      candidate = await requestJson(apiKey, model, [
+        { role: 'system', content: 'You are a careful Christian Hebrew sermon editor and engaging audio storyteller. Return valid JSON only.' },
+        { role: 'user', content: styleRewritePrompt(reference, candidate, { ...evaluation, readability }) },
+      ]);
+      candidate.format_version = FORMAT_VERSION;
+    }
+  }
+  assertExperienceQuality(evaluation, readability);
 }
 
 async function generateLesson(reference, hebrew, english, env) {
@@ -161,57 +182,39 @@ async function generateLesson(reference, hebrew, english, env) {
 KJV: ${english}
 Hebrew: ${hebrew}
 
-PERMANENT STANDARD: HOLY CURIOSITY + COHESIVE ENTERTAINING SERMON
-Genesis 1:25 is the minimum quality benchmark. Structured notes alone are unacceptable.
+PERMANENT STANDARD: HOLY CURIOSITY ENTERTAINING SERMON V3
+The result must feel like one compelling educational sermon or excellent podcast episode, not structured notes.
 
-HARD WORD-COUNT CONTRACT:
-- Write the transcript at ${TARGET_TRANSCRIPT_WORDS} words.
-- The transcript must never be below ${MIN_TRANSCRIPT_WORDS} words.
-- Silently count the transcript before returning JSON.
-- If the transcript is below ${MIN_TRANSCRIPT_WORDS} words, continue writing before returning.
-- The word-count requirement applies to the transcript field alone, not the entire JSON response.
+Write the transcript at ${TARGET_TRANSCRIPT_WORDS} words and never below ${MIN_TRANSCRIPT_WORDS}. Use fifth-grade language for deep biblical, Hebrew, theological, historical, and systems insight.
 
-Write in fifth-grade language with genuinely deep biblical, Hebrew, theological, historical, and systems insight. Preserve reverence. The transcript must feel like one continuous, story-driven sermon or excellent podcast episode.
+Hard experience contract:
+- Begin inside a vivid scene, surprise, tension, mystery, or relatable question before explaining.
+- Build everything around one controlling image or central truth.
+- Include at least four meaningful curiosity turns that uncover real insights.
+- Read the supplied Scripture and uncover an overlooked detail.
+- Teach Hebrew naturally through pronunciation, meaning, grammar, root, Strong's number, recurring biblical scenes, and why each word matters here.
+- Use one to three gentle observational humor moments when natural. Never joke inside Scripture, sacred claims, or prayer.
+- Move emotionally through wonder, discovery, meaning, personal significance, worship, and anticipation.
+- Include one recognizable everyday human moment and one concrete action.
+- Connect to Jesus responsibly and identify whether the bridge is prophecy, literary pattern, canonical echo, repeated vocabulary, or broader theology.
+- End with a practical question, action, warm prayer, repeatable memory line, and anticipation for the next verse.
+- Write for ears: natural sentences, no academic dump, disconnected headings, lecture transitions, fake archaeology, forced symbolism, or repetitive AI language.
+- Briefly connect the previous verse and next verse so Genesis feels like one unfolding journey.
 
-The transcript must:
-- Open with a curiosity gap, cinematic surprise, relatable tension, or vivid scene before explaining the verse.
-- Read the full supplied Scripture, then uncover a repeated word, tension, surprise, or overlooked detail.
-- Place the listener inside the biblical scene using sights, sounds, movement, scale, and emotion.
-- Teach Hebrew naturally inside the story rather than pausing for a detached vocabulary lecture.
-- Include Hebrew spelling, transliteration, meaning, grammar, root, Strong's number, recurring biblical scenes, and representative passages for key words.
-- Use gentle, memorable, Michael-style observational humor throughout when it helps attention and memory. Never joke inside Scripture wording, sacred claims, or prayer.
-- Build everything around one central truth. Every illustration, Hebrew insight, cross-reference, joke, Jesus connection, and application must support that thread.
-- Show relationships among language, people, animals, land, culture, creation patterns, Scripture, and daily life only when supported by the verse.
-- Include one accurate Did You Know discovery tied directly to the verse.
-- Connect to Jesus responsibly. Explicitly distinguish direct prophecy from literary pattern, canonical echo, repeated vocabulary, or broader theology. Never invent hidden symbolism.
-- Apply the verse concretely to Ace's work, parenting, faith, nervous system, systems, stewardship, relationships, or daily life only where it naturally fits.
-- End with one practical question, one action for today, a warm prayer, and a short repeated memory line.
-- Briefly connect to the previous verse and create anticipation for the next verse so Genesis feels like one unfolding journey.
+Apply naturally to Ace's work, parenting, faith, nervous system, systems, stewardship, relationships, or daily life only where the verse supports it.
 
-Avoid repetitive AI phrasing, disconnected headings, an information dump, exaggerated claims, fake archaeology, forced symbolism, and shallow motivational language.
+Return valid JSON only with: title, sermon_title, description, transliteration, opening_hook, central_truth, big_idea, simple_summary, transcript, key_words, strongs_word_stories, cross_references, strongs_cross_references, did_you_know_see_jesus_here, practical_reflection, closing_invitation, prayer, memory_phrase, series_connection, format_version.
 
-Return valid JSON only with these keys:
-title, sermon_title, description, transliteration, opening_hook, central_truth, big_idea, simple_summary, transcript, key_words, strongs_word_stories, cross_references, strongs_cross_references, did_you_know_see_jesus_here, practical_reflection, closing_invitation, prayer, memory_phrase, series_connection, format_version.
+key_words must contain 4-6 objects. strongs_word_stories must contain at least 3. cross_references must contain at least 4. did_you_know_see_jesus_here must contain did_you_know, see_jesus_here, guardrail, and references. series_connection must contain previous and next. format_version must equal ${FORMAT_VERSION}. Never alter or invent the supplied Hebrew or KJV text.`;
 
-Requirements:
-- format_version must equal "${FORMAT_VERSION}".
-- key_words: array of 4-6 objects with hebrew, transliteration, meaning, strongs_number, grammar, root, story_connection.
-- strongs_word_stories: array of at least 3 objects with hebrew, transliteration, strongs_number, normal_range, recurring_scenes, meaning_in_this_verse, representative_passages, development_across_scripture.
-- cross_references: array of at least 4 objects with reference, connection, connection_type.
-- strongs_cross_references: array of objects with strongs_number and explanation.
-- did_you_know_see_jesus_here: object with did_you_know, see_jesus_here, guardrail, references.
-- series_connection: object with previous and next.
-
-Never alter or invent the supplied Hebrew or KJV verse text.`;
-
-  let lesson = await requestLessonJson(apiKey, model, [
-    { role: 'system', content: 'You are a careful Christian Hebrew Bible teacher, cohesive storyteller, and engaging educational sermon writer. Output valid JSON only. Never trade accuracy or reverence for entertainment.' },
+  let lesson = await requestJson(apiKey, model, [
+    { role: 'system', content: 'You are a careful Christian Hebrew Bible teacher, cohesive storyteller, and engaging educational sermon writer. Return valid JSON only. Never trade accuracy or reverence for entertainment.' },
     { role: 'user', content: prompt },
   ]);
   lesson.format_version = FORMAT_VERSION;
-  lesson = await repairShortTranscript(lesson, reference, apiKey, model);
-  const quality = validateLesson(lesson);
-  return { lesson, model, quality };
+  const gated = await enforceExperienceGate(lesson, reference, apiKey, model);
+  const quality = validateLesson(gated.lesson);
+  return { lesson: gated.lesson, model, quality: { ...quality, experience: gated.evaluation, readability: gated.readability, rewriteCount: gated.rewriteCount } };
 }
 
 async function ensureVerse(client, target, canonical) {
@@ -230,17 +233,10 @@ async function ensureVerse(client, target, canonical) {
 async function ensureLesson(client, target, canonical, generated) {
   const lessonOrder = target.chapter === 1 ? target.verse : Number(`${target.chapter}${String(target.verse).padStart(3, '0')}`);
   const slug = `genesis-${target.chapter}-${target.verse}-${String(generated.title || 'hebrew-lesson').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
-  const lessonPayload = {
-    ...generated,
-    reference: target.reference,
-    english_kjv: canonical.english,
-    hebrew: canonical.hebrew,
-    format_version: FORMAT_VERSION,
-  };
+  const lessonPayload = { ...generated, reference: target.reference, english_kjv: canonical.english, hebrew: canonical.hebrew, format_version: FORMAT_VERSION };
   const content = {
     book: 'Genesis', chapter: target.chapter, verseStart: target.verse, verseEnd: target.verse,
-    referenceRange: target.reference, schemaVersion: FORMAT_VERSION,
-    lesson: lessonPayload,
+    referenceRange: target.reference, schemaVersion: FORMAT_VERSION, lesson: lessonPayload,
     verses: [{ book: 'Genesis', chapter: target.chapter, verseNumber: target.verse, reference: target.reference, hebrewText: canonical.hebrew, englishText: canonical.english }],
     publishedAt: new Date().toISOString(),
   };
@@ -250,17 +246,14 @@ async function ensureLesson(client, target, canonical, generated) {
     const existingLesson = existing?.content?.lesson || {};
     try {
       validateLesson(existingLesson);
-      if (existingLesson.format_version === FORMAT_VERSION) return existing;
+      if (existingLesson.format_version === FORMAT_VERSION && existingLesson.experience_quality?.passed) return existing;
     } catch {
-      // Upgrade incomplete or older lessons instead of preserving a weak manual result.
+      // Upgrade older or incomplete lessons.
     }
     const { data: upgraded, error: updateError } = await client.from('hebrew_lessons').update({
-      slug,
-      title: `${target.reference} — ${generated.title}`,
+      slug, title: `${target.reference} — ${generated.title}`,
       description: generated.description || generated.big_idea || `Hebrew lesson for ${target.reference}.`,
-      content,
-      is_published: true,
-      updated_at: new Date().toISOString(),
+      content, is_published: true, updated_at: new Date().toISOString(),
     }).eq('id', existing.id).select('*').single();
     if (updateError) throw updateError;
     return upgraded;
@@ -288,9 +281,7 @@ async function finishAudio(client, lessonOrder, target, env) {
       return { track, segments };
     }
     const audioResponse = await fetch(`${supabaseUrl}/functions/v1/hebrew-daily-audio`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${serviceKey}`, apikey: serviceKey, 'content-type': 'application/json' },
-      body: '{}',
+      method: 'POST', headers: { authorization: `Bearer ${serviceKey}`, apikey: serviceKey, 'content-type': 'application/json' }, body: '{}',
     });
     if (!audioResponse.ok) throw new Error(`Cedar audio generation failed (${audioResponse.status}).`);
   }
@@ -302,38 +293,28 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { ok: false, error: 'Method not allowed.' });
   const fetchSite = String(req.headers['sec-fetch-site'] || '');
   if (fetchSite && fetchSite !== 'same-origin') return send(res, 403, { ok: false, error: 'Same-origin request required.' });
-
   try {
     const client = getSupabaseAdminClient(process.env);
     const { data: active } = await client.from('hebrew_audio_tracks').select('verse_reference,status').in('status', ['generating','ready_to_generate']).limit(1);
     if (active?.length) return send(res, 409, { ok: false, error: `${active[0].verse_reference} is already being generated.` });
-
-    // Move forward from the newest published Scripture lesson. Audio completion is
-    // intentionally not used as the bookmark, because an old unfinished track must
-    // never pull the manual generator backward.
     const latest = await getLatestScriptureReference(client);
     const target = nextReference(latest.chapter, latest.verse);
-
     const canonical = await fetchCanonicalVerse(target.reference);
     const generatedResult = await generateLesson(target.reference, canonical.hebrew, canonical.english, process.env);
     await ensureVerse(client, target, canonical);
     const lesson = await ensureLesson(client, target, canonical, generatedResult.lesson);
-    const lessonOrder = lesson.lesson_order;
-    const audio = await finishAudio(client, lessonOrder, target, process.env);
-
+    const audio = await finishAudio(client, lesson.lesson_order, target, process.env);
     return send(res, 200, {
-      ok: true,
-      reference: target.reference,
-      title: lesson.title,
+      ok: true, reference: target.reference, title: lesson.title,
       transcript_word_count: generatedResult.quality.wordCount,
-      content_quality_gate: 'passed',
-      format_version: FORMAT_VERSION,
-      progression_source: 'latest_published_scripture_lesson',
-      segment_count: audio.segments.length,
-      total_duration_seconds: Number(audio.track.total_duration_seconds) || 0,
-      model: generatedResult.model,
-      status: audio.track.status,
-      published: Boolean(audio.track.is_published),
+      content_quality_gate: 'passed', entertainment_quality_gate: 'passed',
+      entertainment_average_score: generatedResult.quality.experience.average,
+      entertainment_scores: generatedResult.quality.experience.scores,
+      style_rewrite_count: generatedResult.quality.rewriteCount,
+      spoken_readability: generatedResult.quality.readability,
+      format_version: FORMAT_VERSION, progression_source: 'latest_published_scripture_lesson',
+      segment_count: audio.segments.length, total_duration_seconds: Number(audio.track.total_duration_seconds) || 0,
+      model: generatedResult.model, status: audio.track.status, published: Boolean(audio.track.is_published),
     });
   } catch (error) {
     console.error('Manual Hebrew generation failed.', error);

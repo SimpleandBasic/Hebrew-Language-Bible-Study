@@ -4,6 +4,7 @@ export const maxDuration = 300;
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const GENESIS_VERSE_COUNTS = [0,31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26];
+const FORMAT_VERSION = 'holy-curiosity-symbiotic-sermon-v2';
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -45,21 +46,82 @@ async function fetchCanonicalVerse(reference) {
   return { hebrew: String(hebrew).replace(/<[^>]+>/g, ''), english };
 }
 
+function validateLesson(lesson) {
+  const requiredStrings = [
+    'title', 'sermon_title', 'description', 'transliteration', 'opening_hook', 'central_truth',
+    'big_idea', 'simple_summary', 'transcript', 'practical_reflection', 'closing_invitation',
+    'prayer', 'memory_phrase',
+  ];
+  const missing = requiredStrings.filter((key) => !String(lesson?.[key] || '').trim());
+  if (missing.length) throw new Error(`Generated lesson failed required fields: ${missing.join(', ')}.`);
+
+  const transcript = String(lesson.transcript).trim();
+  const wordCount = transcript.split(/\s+/).filter(Boolean).length;
+  if (wordCount < 1100) throw new Error(`Generated transcript is too short (${wordCount} words; minimum 1100).`);
+  if (!Array.isArray(lesson.key_words) || lesson.key_words.length < 4) throw new Error('Generated lesson needs at least four integrated Hebrew key words.');
+  if (!Array.isArray(lesson.strongs_word_stories) || lesson.strongs_word_stories.length < 3) throw new Error('Generated lesson needs at least three Strong’s word stories.');
+  if (!Array.isArray(lesson.cross_references) || lesson.cross_references.length < 4) throw new Error('Generated lesson needs at least four responsible cross references.');
+  if (!lesson.did_you_know_see_jesus_here?.did_you_know || !lesson.did_you_know_see_jesus_here?.see_jesus_here || !lesson.did_you_know_see_jesus_here?.guardrail) {
+    throw new Error('Generated lesson needs Did You Know, See Jesus Here, and an explicit interpretive guardrail.');
+  }
+  if (!lesson.series_connection?.previous || !lesson.series_connection?.next) throw new Error('Generated lesson must connect to the previous verse and anticipate the next verse.');
+  return { wordCount };
+}
+
 async function generateLesson(reference, hebrew, english, env) {
   const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY is missing from the Vercel project.');
   const model = env.HEBREW_GENERATION_MODEL || 'gpt-4.1-mini';
-  const prompt = `Create a warm, accurate educational sermon lesson for ${reference}.\n\nKJV: ${english}\nHebrew: ${hebrew}\n\nUse fifth-grade language with deep insight. Preserve reverence. Include gentle memorable humor, Hebrew transliteration, 4-6 key Hebrew words with Strong's numbers and grammar, responsible cross references, an explicitly careful Jesus connection, practical reflection, prayer, and a memorable closing line. Never invent a Hebrew spelling or change the supplied verse text. Return JSON only with these keys: title, description, transliteration, opening_hook, big_idea, simple_summary, transcript, key_words, cross_references, strongs_cross_references, did_you_know_see_jesus_here, practical_reflection, prayer, memory_phrase. key_words must be an array of objects with hebrew, transliteration, meaning, strongs_number, grammar. cross_references must be an array of objects with reference and connection. strongs_cross_references must be an array of objects with strongs_number and explanation. did_you_know_see_jesus_here must be an object with did_you_know and see_jesus_here.`;
+  const prompt = `Create a complete, publishable Hebrew Bible teaching episode for ${reference}.
+
+KJV: ${english}
+Hebrew: ${hebrew}
+
+PERMANENT STANDARD: HOLY CURIOSITY + COHESIVE ENTERTAINING SERMON
+Genesis 1:25 is the minimum quality benchmark. Structured notes alone are unacceptable.
+
+Write in fifth-grade language with genuinely deep biblical, Hebrew, theological, historical, and systems insight. Preserve reverence. The full transcript must be at least 1,100 words and feel like one continuous, story-driven sermon or excellent podcast episode.
+
+The transcript must:
+- Open with a curiosity gap, cinematic surprise, relatable tension, or vivid scene before explaining the verse.
+- Read the full supplied Scripture, then uncover a repeated word, tension, surprise, or overlooked detail.
+- Place the listener inside the biblical scene using sights, sounds, movement, scale, and emotion.
+- Teach Hebrew naturally inside the story rather than pausing for a detached vocabulary lecture.
+- Include Hebrew spelling, transliteration, meaning, grammar, root, Strong's number, recurring biblical scenes, and representative passages for key words.
+- Use gentle, memorable, Michael-style observational humor throughout when it helps attention and memory. Never joke inside Scripture wording, sacred claims, or prayer.
+- Build everything around one central truth. Every illustration, Hebrew insight, cross-reference, joke, Jesus connection, and application must support that thread.
+- Show relationships among language, people, animals, land, culture, creation patterns, Scripture, and daily life only when supported by the verse.
+- Include one accurate Did You Know discovery tied directly to the verse.
+- Connect to Jesus responsibly. Explicitly distinguish direct prophecy from literary pattern, canonical echo, repeated vocabulary, or broader theology. Never invent hidden symbolism.
+- Apply the verse concretely to Ace's work, parenting, faith, nervous system, systems, stewardship, relationships, or daily life only where it naturally fits.
+- End with one practical question, one action for today, a warm prayer, and a short repeated memory line.
+- Briefly connect to the previous verse and create anticipation for the next verse so Genesis feels like one unfolding journey.
+
+Avoid repetitive AI phrasing, disconnected headings, an information dump, exaggerated claims, fake archaeology, forced symbolism, and shallow motivational language.
+
+Return valid JSON only with these keys:
+title, sermon_title, description, transliteration, opening_hook, central_truth, big_idea, simple_summary, transcript, key_words, strongs_word_stories, cross_references, strongs_cross_references, did_you_know_see_jesus_here, practical_reflection, closing_invitation, prayer, memory_phrase, series_connection, format_version.
+
+Requirements:
+- format_version must equal "${FORMAT_VERSION}".
+- key_words: array of 4-6 objects with hebrew, transliteration, meaning, strongs_number, grammar, root, story_connection.
+- strongs_word_stories: array of at least 3 objects with hebrew, transliteration, strongs_number, normal_range, recurring_scenes, meaning_in_this_verse, representative_passages, development_across_scripture.
+- cross_references: array of at least 4 objects with reference, connection, connection_type.
+- strongs_cross_references: array of objects with strongs_number and explanation.
+- did_you_know_see_jesus_here: object with did_you_know, see_jesus_here, guardrail, references.
+- series_connection: object with previous and next.
+
+Never alter or invent the supplied Hebrew or KJV verse text.`;
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       model,
-      temperature: 0.5,
+      temperature: 0.7,
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: 'You are a careful Christian Hebrew Bible teacher. Output valid JSON only.' },
+        { role: 'system', content: 'You are a careful Christian Hebrew Bible teacher, cohesive storyteller, and engaging educational sermon writer. Output valid JSON only. Never trade accuracy or reverence for entertainment.' },
         { role: 'user', content: prompt },
       ],
     }),
@@ -68,7 +130,10 @@ async function generateLesson(reference, hebrew, english, env) {
   if (!response.ok) throw new Error(payload?.error?.message || `Lesson generation failed (${response.status}).`);
   const raw = payload?.choices?.[0]?.message?.content;
   if (!raw) throw new Error('Lesson generation returned no content.');
-  return { lesson: JSON.parse(raw), model };
+  const lesson = JSON.parse(raw);
+  lesson.format_version = FORMAT_VERSION;
+  const quality = validateLesson(lesson);
+  return { lesson, model, quality };
 }
 
 async function ensureVerse(client, target, canonical) {
@@ -92,17 +157,36 @@ async function ensureLesson(client, target, canonical, generated) {
     reference: target.reference,
     english_kjv: canonical.english,
     hebrew: canonical.hebrew,
+    format_version: FORMAT_VERSION,
   };
   const content = {
     book: 'Genesis', chapter: target.chapter, verseStart: target.verse, verseEnd: target.verse,
-    referenceRange: target.reference, schemaVersion: 'manual-canonical-sermon-v1',
+    referenceRange: target.reference, schemaVersion: FORMAT_VERSION,
     lesson: lessonPayload,
     verses: [{ book: 'Genesis', chapter: target.chapter, verseNumber: target.verse, reference: target.reference, hebrewText: canonical.hebrew, englishText: canonical.english }],
     publishedAt: new Date().toISOString(),
   };
   const { data: existing, error: selectError } = await client.from('hebrew_lessons').select('*').eq('lesson_order', lessonOrder).maybeSingle();
   if (selectError) throw selectError;
-  if (existing) return existing;
+  if (existing) {
+    const existingLesson = existing?.content?.lesson || {};
+    try {
+      validateLesson(existingLesson);
+      if (existingLesson.format_version === FORMAT_VERSION) return existing;
+    } catch {
+      // Upgrade incomplete or older lessons instead of preserving a weak manual result.
+    }
+    const { data: upgraded, error: updateError } = await client.from('hebrew_lessons').update({
+      slug,
+      title: `${target.reference} — ${generated.title}`,
+      description: generated.description || generated.big_idea || `Hebrew lesson for ${target.reference}.`,
+      content,
+      is_published: true,
+      updated_at: new Date().toISOString(),
+    }).eq('id', existing.id).select('*').single();
+    if (updateError) throw updateError;
+    return upgraded;
+  }
   const { data, error } = await client.from('hebrew_lessons').insert({
     slug, title: `${target.reference} — ${generated.title}`,
     description: generated.description || generated.big_idea || `Hebrew lesson for ${target.reference}.`,
@@ -165,6 +249,9 @@ export default async function handler(req, res) {
       ok: true,
       reference: target.reference,
       title: lesson.title,
+      transcript_word_count: generatedResult.quality.wordCount,
+      content_quality_gate: 'passed',
+      format_version: FORMAT_VERSION,
       segment_count: audio.segments.length,
       total_duration_seconds: Number(audio.track.total_duration_seconds) || 0,
       model: generatedResult.model,

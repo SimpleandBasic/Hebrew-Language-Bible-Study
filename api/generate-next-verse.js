@@ -26,6 +26,36 @@ function parseReference(reference) {
   return match ? { chapter: Number(match[1]), verse: Number(match[2]) } : null;
 }
 
+function referenceFromLesson(lesson) {
+  const candidates = [
+    lesson?.content?.referenceRange,
+    lesson?.content?.lesson?.reference,
+    lesson?.content?.verses?.[0]?.reference,
+    lesson?.title?.match(/Genesis\s+\d+:\d+/i)?.[0],
+  ];
+  for (const candidate of candidates) {
+    const parsed = parseReference(candidate);
+    if (parsed) return parsed;
+  }
+  return null;
+}
+
+async function getLatestScriptureReference(client) {
+  const { data: lessons, error } = await client.from('hebrew_lessons')
+    .select('title,lesson_order,content,is_published')
+    .eq('is_published', true)
+    .order('lesson_order', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+
+  const parsedLessons = (lessons || [])
+    .map((lesson) => referenceFromLesson(lesson))
+    .filter(Boolean)
+    .sort((a, b) => a.chapter - b.chapter || a.verse - b.verse);
+
+  return parsedLessons.at(-1) || { chapter: 1, verse: 0 };
+}
+
 async function fetchCanonicalVerse(reference) {
   const sefariaRef = reference.replace('Genesis ', 'Genesis.').replace(':', '.');
   const response = await fetch(`https://www.sefaria.org/api/texts/${encodeURIComponent(sefariaRef)}?context=0&commentary=0`, {
@@ -230,12 +260,10 @@ export default async function handler(req, res) {
     const { data: active } = await client.from('hebrew_audio_tracks').select('verse_reference,status').in('status', ['generating','ready_to_generate']).limit(1);
     if (active?.length) return send(res, 409, { ok: false, error: `${active[0].verse_reference} is already being generated.` });
 
-    const { data: tracks, error: tracksError } = await client.from('hebrew_audio_tracks')
-      .select('verse_reference,status,is_published').eq('is_published', true).eq('status', 'ready');
-    if (tracksError) throw tracksError;
-    const parsed = (tracks || []).map((item) => ({ ...item, parsed: parseReference(item.verse_reference) })).filter((item) => item.parsed)
-      .sort((a, b) => a.parsed.chapter - b.parsed.chapter || a.parsed.verse - b.parsed.verse);
-    const latest = parsed.at(-1)?.parsed || { chapter: 1, verse: 0 };
+    // Move forward from the newest published Scripture lesson. Audio completion is
+    // intentionally not used as the bookmark, because an old unfinished track must
+    // never pull the manual generator backward.
+    const latest = await getLatestScriptureReference(client);
     const target = nextReference(latest.chapter, latest.verse);
 
     const canonical = await fetchCanonicalVerse(target.reference);
@@ -252,6 +280,7 @@ export default async function handler(req, res) {
       transcript_word_count: generatedResult.quality.wordCount,
       content_quality_gate: 'passed',
       format_version: FORMAT_VERSION,
+      progression_source: 'latest_published_scripture_lesson',
       segment_count: audio.segments.length,
       total_duration_seconds: Number(audio.track.total_duration_seconds) || 0,
       model: generatedResult.model,

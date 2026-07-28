@@ -5,6 +5,8 @@ export const maxDuration = 300;
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const GENESIS_VERSE_COUNTS = [0,31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26];
 const FORMAT_VERSION = 'holy-curiosity-symbiotic-sermon-v2';
+const MIN_TRANSCRIPT_WORDS = 1100;
+const TARGET_TRANSCRIPT_WORDS = '1,350 to 1,550';
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -76,6 +78,10 @@ async function fetchCanonicalVerse(reference) {
   return { hebrew: String(hebrew).replace(/<[^>]+>/g, ''), english };
 }
 
+function transcriptWordCount(lesson) {
+  return String(lesson?.transcript || '').trim().split(/\s+/).filter(Boolean).length;
+}
+
 function validateLesson(lesson) {
   const requiredStrings = [
     'title', 'sermon_title', 'description', 'transliteration', 'opening_hook', 'central_truth',
@@ -85,9 +91,8 @@ function validateLesson(lesson) {
   const missing = requiredStrings.filter((key) => !String(lesson?.[key] || '').trim());
   if (missing.length) throw new Error(`Generated lesson failed required fields: ${missing.join(', ')}.`);
 
-  const transcript = String(lesson.transcript).trim();
-  const wordCount = transcript.split(/\s+/).filter(Boolean).length;
-  if (wordCount < 1100) throw new Error(`Generated transcript is too short (${wordCount} words; minimum 1100).`);
+  const wordCount = transcriptWordCount(lesson);
+  if (wordCount < MIN_TRANSCRIPT_WORDS) throw new Error(`Generated transcript is too short (${wordCount} words; minimum ${MIN_TRANSCRIPT_WORDS}).`);
   if (!Array.isArray(lesson.key_words) || lesson.key_words.length < 4) throw new Error('Generated lesson needs at least four integrated Hebrew key words.');
   if (!Array.isArray(lesson.strongs_word_stories) || lesson.strongs_word_stories.length < 3) throw new Error('Generated lesson needs at least three Strong’s word stories.');
   if (!Array.isArray(lesson.cross_references) || lesson.cross_references.length < 4) throw new Error('Generated lesson needs at least four responsible cross references.');
@@ -96,6 +101,55 @@ function validateLesson(lesson) {
   }
   if (!lesson.series_connection?.previous || !lesson.series_connection?.next) throw new Error('Generated lesson must connect to the previous verse and anticipate the next verse.');
   return { wordCount };
+}
+
+async function requestLessonJson(apiKey, model, messages) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      temperature: 0.7,
+      max_tokens: 7000,
+      response_format: { type: 'json_object' },
+      messages,
+    }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload?.error?.message || `Lesson generation failed (${response.status}).`);
+  const raw = payload?.choices?.[0]?.message?.content;
+  if (!raw) throw new Error('Lesson generation returned no content.');
+  return JSON.parse(raw);
+}
+
+async function repairShortTranscript(lesson, reference, apiKey, model) {
+  const currentWords = transcriptWordCount(lesson);
+  if (currentWords >= MIN_TRANSCRIPT_WORDS) return lesson;
+
+  const repaired = await requestLessonJson(apiKey, model, [
+    {
+      role: 'system',
+      content: 'You are a careful Christian Hebrew Bible editor. Return valid JSON only. Preserve factual accuracy, reverence, supplied Scripture, and every required field.',
+    },
+    {
+      role: 'user',
+      content: `Repair this ${reference} lesson because its transcript is only ${currentWords} words.
+
+HARD WORD-COUNT CONTRACT:
+- Rewrite and expand the transcript to ${TARGET_TRANSCRIPT_WORDS} words.
+- The transcript must never be below ${MIN_TRANSCRIPT_WORDS} words.
+- Silently count the transcript before returning JSON.
+- If it is below ${MIN_TRANSCRIPT_WORDS}, continue writing before returning.
+- Preserve the same central truth, Hebrew details, theology, KJV wording, tone, prayer, applications, and responsible Jesus guardrail.
+- Add meaningful scene-setting, Hebrew explanation, biblical connections, application, transitions, and sermon development. Do not pad with repetition.
+- Return the complete lesson JSON object, not only the transcript.
+
+LESSON TO REPAIR:
+${JSON.stringify(lesson)}`,
+    },
+  ]);
+  repaired.format_version = FORMAT_VERSION;
+  return repaired;
 }
 
 async function generateLesson(reference, hebrew, english, env) {
@@ -110,7 +164,14 @@ Hebrew: ${hebrew}
 PERMANENT STANDARD: HOLY CURIOSITY + COHESIVE ENTERTAINING SERMON
 Genesis 1:25 is the minimum quality benchmark. Structured notes alone are unacceptable.
 
-Write in fifth-grade language with genuinely deep biblical, Hebrew, theological, historical, and systems insight. Preserve reverence. The full transcript must be at least 1,100 words and feel like one continuous, story-driven sermon or excellent podcast episode.
+HARD WORD-COUNT CONTRACT:
+- Write the transcript at ${TARGET_TRANSCRIPT_WORDS} words.
+- The transcript must never be below ${MIN_TRANSCRIPT_WORDS} words.
+- Silently count the transcript before returning JSON.
+- If the transcript is below ${MIN_TRANSCRIPT_WORDS} words, continue writing before returning.
+- The word-count requirement applies to the transcript field alone, not the entire JSON response.
+
+Write in fifth-grade language with genuinely deep biblical, Hebrew, theological, historical, and systems insight. Preserve reverence. The transcript must feel like one continuous, story-driven sermon or excellent podcast episode.
 
 The transcript must:
 - Open with a curiosity gap, cinematic surprise, relatable tension, or vivid scene before explaining the verse.
@@ -143,25 +204,12 @@ Requirements:
 
 Never alter or invent the supplied Hebrew or KJV verse text.`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      temperature: 0.7,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: 'You are a careful Christian Hebrew Bible teacher, cohesive storyteller, and engaging educational sermon writer. Output valid JSON only. Never trade accuracy or reverence for entertainment.' },
-        { role: 'user', content: prompt },
-      ],
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload?.error?.message || `Lesson generation failed (${response.status}).`);
-  const raw = payload?.choices?.[0]?.message?.content;
-  if (!raw) throw new Error('Lesson generation returned no content.');
-  const lesson = JSON.parse(raw);
+  let lesson = await requestLessonJson(apiKey, model, [
+    { role: 'system', content: 'You are a careful Christian Hebrew Bible teacher, cohesive storyteller, and engaging educational sermon writer. Output valid JSON only. Never trade accuracy or reverence for entertainment.' },
+    { role: 'user', content: prompt },
+  ]);
   lesson.format_version = FORMAT_VERSION;
+  lesson = await repairShortTranscript(lesson, reference, apiKey, model);
   const quality = validateLesson(lesson);
   return { lesson, model, quality };
 }

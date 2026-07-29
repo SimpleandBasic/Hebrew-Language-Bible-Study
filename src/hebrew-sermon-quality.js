@@ -1,7 +1,7 @@
 export const EXPERIENCE_FORMAT_VERSION = 'holy-curiosity-entertaining-sermon-v3';
 export const MIN_STYLE_SCORE = 8;
 export const MIN_STYLE_AVERAGE = 8.5;
-export const MAX_STYLE_REWRITES = 2;
+export const MAX_STYLE_REWRITES = 4;
 
 export const STYLE_SCORE_KEYS = [
   'opening_hook', 'storytelling', 'entertainment', 'wonder', 'natural_humor',

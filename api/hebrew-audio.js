@@ -173,17 +173,22 @@ async function generateSpeech(input, model, voice, instructions, speechSettings)
   return Buffer.from(await response.arrayBuffer());
 }
 
+function trackCompletionPatch(track, ready, duration) {
+  const alreadyPublished = Boolean(track?.is_published);
+  return {
+    status: ready ? "ready" : "generating",
+    total_duration_seconds: duration || null,
+    is_published: alreadyPublished,
+    published_at: alreadyPublished ? (track.published_at || new Date().toISOString()) : null,
+  };
+}
+
 async function updateTrackCompletion(track) {
   const segments = await supabaseRequest(`/rest/v1/hebrew_audio_segments?select=id,status,duration_seconds&track_id=eq.${encodeURIComponent(track.id)}&order=sort_order.asc`);
   const remaining = segments.filter((segment) => segment.status !== "ready").length;
   const duration = segments.reduce((sum, segment) => sum + (Number(segment.duration_seconds) || 0), 0);
   const ready = remaining === 0 && segments.length > 0;
-  await patchRow("hebrew_audio_tracks", track.id, {
-    status: ready ? "ready" : "generating",
-    total_duration_seconds: duration || null,
-    is_published: ready,
-    published_at: ready ? (track.published_at || new Date().toISOString()) : null,
-  });
+  await patchRow("hebrew_audio_tracks", track.id, trackCompletionPatch(track, ready, duration));
   return { remaining, ready, duration };
 }
 
@@ -283,4 +288,10 @@ export default async function hebrewAudio(request, response) {
   }
 }
 
-export const __test = { checksumFor, estimateMp3DurationSeconds, segmentAudioPath, serviceAuthHeaders };
+export const __test = {
+  checksumFor,
+  estimateMp3DurationSeconds,
+  segmentAudioPath,
+  serviceAuthHeaders,
+  trackCompletionPatch,
+};

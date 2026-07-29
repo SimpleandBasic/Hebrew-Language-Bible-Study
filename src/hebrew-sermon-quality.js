@@ -1,5 +1,6 @@
 export const EXPERIENCE_FORMAT_VERSION = 'holy-curiosity-entertaining-sermon-v3';
 export const MIN_STYLE_SCORE = 8;
+export const MIN_HUMOR_SCORE = 7;
 export const MIN_STYLE_AVERAGE = 8.5;
 export const MAX_STYLE_REWRITES = 4;
 
@@ -41,7 +42,10 @@ export function normalizeStyleEvaluation(raw) {
   }
   const values = Object.values(scores);
   const average = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const failedCategories = STYLE_SCORE_KEYS.filter((key) => scores[key] < MIN_STYLE_SCORE);
+  const failedCategories = STYLE_SCORE_KEYS.filter((key) => {
+    const minimum = key === 'natural_humor' ? MIN_HUMOR_SCORE : MIN_STYLE_SCORE;
+    return scores[key] < minimum;
+  });
   return {
     scores,
     average: Number(average.toFixed(2)),

@@ -18,7 +18,11 @@ const visualStudyFiles = [
   "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2.sql",
   "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2_hardening.sql"
 ];
-const requiredFiles = [...existingReaderFiles, ...audioLibraryFiles, ...visualStudyFiles];
+const v4Files = [
+  "src/v4/release-manager.js", "api/hebrew-v4-release.js", "tests/hebrew-v4-release.test.mjs",
+  "supabase/migrations/20260729010000_add_hebrew_sermon_experience_v4.sql"
+];
+const requiredFiles = [...existingReaderFiles, ...audioLibraryFiles, ...visualStudyFiles, ...v4Files];
 
 for (const file of requiredFiles) {
   if (!existsSync(file)) throw new Error(`Missing required app file: ${file}`);
@@ -43,20 +47,18 @@ for (const file of ["library.css", "audio-admin.js"]) {
 for (const file of [
   ...existingReaderFiles.filter((file) => file.endsWith(".js")),
   "library.js", "visual-study.js", "artwork-fix.js", "audio-player-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
+  "api/hebrew-v4-release.js", "src/v4/release-manager.js",
   "src/actions/audio-tools.js", "src/index.js", "src/tool-schemas.js",
-  "scripts/generate-hebrew-audio.mjs", "scripts/check-visual-study.mjs", "tests/visual-study-logic.test.mjs"
+  "scripts/generate-hebrew-audio.mjs", "scripts/check-visual-study.mjs", "tests/visual-study-logic.test.mjs", "tests/hebrew-v4-release.test.mjs"
 ]) {
   execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });
 }
 execFileSync(process.execPath, ["tests/audio-logic.test.mjs"], { stdio: "inherit" });
 execFileSync(process.execPath, ["scripts/check-visual-study.mjs"], { stdio: "inherit" });
 execFileSync(process.execPath, ["--test", "tests/visual-study-logic.test.mjs"], { stdio: "inherit" });
+execFileSync(process.execPath, ["--test", "tests/hebrew-v4-release.test.mjs"], { stdio: "inherit" });
 
-const requiredAudioTools = [
-  "prepare_hebrew_audio_track",
-  "generate_next_hebrew_audio_segment",
-  "get_hebrew_audio_status"
-];
+const requiredAudioTools = ["prepare_hebrew_audio_track", "generate_next_hebrew_audio_segment", "get_hebrew_audio_status"];
 const toolSchemas = readFileSync("src/tool-schemas.js", "utf8");
 const toolRegistry = readFileSync("src/index.js", "utf8");
 const mcpHandler = readFileSync("api/hebrew-mcp.js", "utf8");
@@ -82,11 +84,23 @@ for (const table of ["hebrew_book_albums", "hebrew_audio_tracks", "hebrew_audio_
 }
 
 const visualMigration = readFileSync("supabase/migrations/20260722_hebrew_visual_study_pipeline_v2.sql", "utf8");
-for (const table of [
-  "hebrew_lesson_manifests", "hebrew_visual_feeds", "hebrew_visual_cards",
-  "hebrew_visual_assets", "hebrew_visual_sources", "hebrew_visual_jobs"
-]) {
+for (const table of ["hebrew_lesson_manifests", "hebrew_visual_feeds", "hebrew_visual_cards", "hebrew_visual_assets", "hebrew_visual_sources", "hebrew_visual_jobs"]) {
   if (!visualMigration.includes(table)) throw new Error(`Visual migration is missing ${table}`);
+}
+
+const v4Migration = readFileSync("supabase/migrations/20260729010000_add_hebrew_sermon_experience_v4.sql", "utf8");
+for (const table of [
+  "hebrew_episodes", "hebrew_episode_revisions", "hebrew_research_dossiers", "hebrew_sermon_drafts",
+  "hebrew_sermon_evaluations", "hebrew_pipeline_runs", "hebrew_stage_runs", "hebrew_release_verifications", "hebrew_episode_publications"
+]) {
+  if (!v4Migration.includes(`public.${table}`)) throw new Error(`V4 migration is missing ${table}`);
+}
+for (const marker of ["create_hebrew_episode_revision", "publish_hebrew_episode_revision", "ready_for_release", "release_integrity"]) {
+  if (!v4Migration.includes(marker)) throw new Error(`V4 migration is missing ${marker}`);
+}
+const releaseManager = readFileSync("src/v4/release-manager.js", "utf8");
+for (const marker of ["spokenLanguageChecks", "normalizeEvaluation", "verifyRevision", "publishRevision", "audio_integrity", "visual_integrity", "album_art_integrity"]) {
+  if (!releaseManager.includes(marker)) throw new Error(`V4 release manager is missing ${marker}`);
 }
 
 const vercelConfig = JSON.parse(readFileSync("vercel.json", "utf8"));
@@ -98,12 +112,12 @@ if (!indexHtml.includes("Hebrew Bible Speaking Trainer")) throw new Error("Exist
 for (const forbidden of [/sk-[A-Za-z0-9_-]{20,}/, /sb_secret_[A-Za-z0-9_-]{20,}/]) {
   for (const file of [
     "library.js", "visual-study.js", "artwork-fix.js", "audio-player-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
-    "src/actions/audio-tools.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md",
-    "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2.sql",
-    "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2_hardening.sql"
+    "api/hebrew-v4-release.js", "src/v4/release-manager.js", "src/actions/audio-tools.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md",
+    "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2.sql", "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2_hardening.sql",
+    "supabase/migrations/20260729010000_add_hebrew_sermon_experience_v4.sql"
   ]) {
     if (forbidden.test(readFileSync(file, "utf8"))) throw new Error(`Possible secret found in ${file}`);
   }
 }
 
-console.log("Hebrew reader, audio library, MCP audio pipeline, visual-study pipeline, routing, artwork, and security checks passed.");
+console.log("Hebrew reader, audio, visual study, V4 atomic release, routing, artwork, and security checks passed.");

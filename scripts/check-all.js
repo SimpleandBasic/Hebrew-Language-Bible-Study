@@ -19,7 +19,8 @@ const visualStudyFiles = [
   "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2_hardening.sql"
 ];
 const v4Files = [
-  "src/v4/release-manager.js", "api/run-generation-job.js", "tests/hebrew-v4-release.test.mjs",
+  "src/v4/release-manager.js", "src/v4/episode-generator.js", "api/run-generation-job.js",
+  "tests/hebrew-v4-release.test.mjs", "tests/hebrew-v4-generator.test.mjs",
   "supabase/migrations/20260729010000_add_hebrew_sermon_experience_v4.sql"
 ];
 const requiredFiles = [...existingReaderFiles, ...audioLibraryFiles, ...visualStudyFiles, ...v4Files];
@@ -41,14 +42,17 @@ for (const file of ["library.css", "audio-admin.js"]) if (!adminHtml.includes(fi
 for (const file of [
   ...existingReaderFiles.filter((file) => file.endsWith(".js")),
   "library.js", "visual-study.js", "artwork-fix.js", "audio-player-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
-  "api/run-generation-job.js", "src/v4/release-manager.js", "src/actions/audio-tools.js", "src/index.js", "src/tool-schemas.js",
-  "scripts/generate-hebrew-audio.mjs", "scripts/check-visual-study.mjs", "tests/visual-study-logic.test.mjs", "tests/hebrew-v4-release.test.mjs"
+  "api/generate-next-verse.js", "api/run-generation-job.js", "src/v4/release-manager.js", "src/v4/episode-generator.js",
+  "src/actions/audio-tools.js", "src/index.js", "src/tool-schemas.js",
+  "scripts/generate-hebrew-audio.mjs", "scripts/check-visual-study.mjs", "tests/visual-study-logic.test.mjs",
+  "tests/hebrew-v4-release.test.mjs", "tests/hebrew-v4-generator.test.mjs"
 ]) execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });
 
 execFileSync(process.execPath, ["tests/audio-logic.test.mjs"], { stdio: "inherit" });
 execFileSync(process.execPath, ["scripts/check-visual-study.mjs"], { stdio: "inherit" });
 execFileSync(process.execPath, ["--test", "tests/visual-study-logic.test.mjs"], { stdio: "inherit" });
 execFileSync(process.execPath, ["--test", "tests/hebrew-v4-release.test.mjs"], { stdio: "inherit" });
+execFileSync(process.execPath, ["--test", "tests/hebrew-v4-generator.test.mjs"], { stdio: "inherit" });
 
 const requiredAudioTools = ["prepare_hebrew_audio_track", "generate_next_hebrew_audio_segment", "get_hebrew_audio_status"];
 const toolSchemas = readFileSync("src/tool-schemas.js", "utf8");
@@ -77,6 +81,10 @@ for (const table of ["hebrew_episodes", "hebrew_episode_revisions", "hebrew_rese
 for (const marker of ["create_hebrew_episode_revision", "publish_hebrew_episode_revision", "ready_for_release", "release_integrity"]) if (!v4Migration.includes(marker)) throw new Error(`V4 migration is missing ${marker}`);
 const releaseManager = readFileSync("src/v4/release-manager.js", "utf8");
 for (const marker of ["spokenLanguageChecks", "normalizeEvaluation", "verifyRevision", "publishRevision", "audio_integrity", "visual_integrity", "album_art_integrity"]) if (!releaseManager.includes(marker)) throw new Error(`V4 release manager is missing ${marker}`);
+const episodeGenerator = readFileSync("src/v4/episode-generator.js", "utf8");
+for (const marker of ["generateV4Episode", "createV4Revision", "persistV4Generation", "linkV4PublishedAssets", "research_dossier", "narrative_map"]) if (!episodeGenerator.includes(marker)) throw new Error(`V4 episode generator is missing ${marker}`);
+const generationRoute = readFileSync("api/generate-next-verse.js", "utf8");
+for (const marker of ["generateV4Episode", "persistV4Generation", "linkV4PublishedAssets", "v4_next_stage"]) if (!generationRoute.includes(marker)) throw new Error(`Generation route is missing V4 marker ${marker}`);
 const missionControl = readFileSync("api/run-generation-job.js", "utf8");
 for (const marker of ["verify_revision", "publish_revision", "verifyRevision", "publishRevision"]) if (!missionControl.includes(marker)) throw new Error(`Mission Control is missing V4 action ${marker}`);
 
@@ -89,10 +97,11 @@ if (!indexHtml.includes("Hebrew Bible Speaking Trainer")) throw new Error("Exist
 for (const forbidden of [/sk-[A-Za-z0-9_-]{20,}/, /sb_secret_[A-Za-z0-9_-]{20,}/]) {
   for (const file of [
     "library.js", "visual-study.js", "artwork-fix.js", "audio-player-fix.js", "audio-admin.js", "api/hebrew-audio.js", "api/hebrew-mcp.js",
-    "api/run-generation-job.js", "src/v4/release-manager.js", "src/actions/audio-tools.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md",
+    "api/generate-next-verse.js", "api/run-generation-job.js", "src/v4/release-manager.js", "src/v4/episode-generator.js",
+    "src/actions/audio-tools.js", "library.html", "audio-admin.html", "AUDIO_LIBRARY.md",
     "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2.sql", "supabase/migrations/20260722_hebrew_visual_study_pipeline_v2_hardening.sql",
     "supabase/migrations/20260729010000_add_hebrew_sermon_experience_v4.sql"
   ]) if (forbidden.test(readFileSync(file, "utf8"))) throw new Error(`Possible secret found in ${file}`);
 }
 
-console.log("Hebrew reader, audio, visual study, V4 atomic release, routing, artwork, and security checks passed.");
+console.log("Hebrew reader, audio, visual study, V4 generation, atomic release, routing, artwork, and security checks passed.");

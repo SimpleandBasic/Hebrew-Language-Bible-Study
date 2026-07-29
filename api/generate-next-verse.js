@@ -14,6 +14,7 @@ const GENESIS_VERSE_COUNTS = [0,31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,
 const FORMAT_VERSION = EXPERIENCE_FORMAT_VERSION;
 const MIN_TRANSCRIPT_WORDS = 1100;
 const TARGET_TRANSCRIPT_WORDS = '1,350 to 1,550';
+const MAX_WORD_COUNT_REPAIRS = 3;
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -112,14 +113,19 @@ async function requestJson(apiKey, model, messages, temperature = 0.7) {
 }
 
 async function repairShortTranscript(lesson, reference, apiKey, model) {
-  const currentWords = transcriptWordCount(lesson);
-  if (currentWords >= MIN_TRANSCRIPT_WORDS) return lesson;
-  const repaired = await requestJson(apiKey, model, [
-    { role: 'system', content: 'You are a careful Christian Hebrew Bible editor. Return valid JSON only. Preserve accuracy, reverence, Scripture, and every field.' },
-    { role: 'user', content: `Rewrite and expand this complete ${reference} lesson transcript to ${TARGET_TRANSCRIPT_WORDS} words, never below ${MIN_TRANSCRIPT_WORDS}. Preserve the theology, Hebrew details, Scripture wording, central truth, prayer, applications, and responsible Jesus guardrail. Add meaningful scenes, discoveries, transitions, and application without padding. Return the complete lesson JSON.\n\n${JSON.stringify(lesson)}` },
-  ]);
-  repaired.format_version = FORMAT_VERSION;
-  return repaired;
+  let candidate = lesson;
+  for (let attempt = 0; attempt < MAX_WORD_COUNT_REPAIRS; attempt += 1) {
+    const currentWords = transcriptWordCount(candidate);
+    if (currentWords >= MIN_TRANSCRIPT_WORDS) return candidate;
+    candidate = await requestJson(apiKey, model, [
+      { role: 'system', content: 'You are a careful Christian Hebrew Bible editor. Return valid JSON only. Preserve accuracy, reverence, Scripture, and every field.' },
+      { role: 'user', content: `The complete ${reference} lesson transcript is only ${currentWords} words. Rewrite and expand the transcript to 1,450 to 1,600 words, never below ${MIN_TRANSCRIPT_WORDS}. Preserve every JSON field, theology, Hebrew details, Scripture wording, central truth, prayer, applications, entertainment style, and responsible Jesus guardrail. Add meaningful scenes, discoveries, transitions, and application without padding. Silently count the transcript before returning the complete lesson JSON.\n\n${JSON.stringify(candidate)}` },
+    ]);
+    candidate.format_version = FORMAT_VERSION;
+  }
+  const finalWords = transcriptWordCount(candidate);
+  if (finalWords < MIN_TRANSCRIPT_WORDS) throw new Error(`Generated transcript remained too short after ${MAX_WORD_COUNT_REPAIRS} repairs (${finalWords} words; minimum ${MIN_TRANSCRIPT_WORDS}).`);
+  return candidate;
 }
 
 function styleJudgePrompt(reference, lesson, readability) {

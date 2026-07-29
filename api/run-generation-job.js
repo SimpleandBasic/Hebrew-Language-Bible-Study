@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { getSupabaseAdminClient } from '../src/supabase-client.js';
 import { verifyRevision, publishRevision } from '../src/v4/release-manager.js';
+import { produceV4VisualRelease } from '../src/v4/visual-producer.js';
 
 export const maxDuration = 300;
 
@@ -43,8 +44,8 @@ async function runGeneration(origin, job, jobId, client) {
     jobId,
     'v4_episode_pipeline',
     'started',
-    'V4 research, narrative, sermon, evaluation, and audio pipeline started.',
-    { pipeline_version: 'sermon-experience-v4.1' },
+    'V4 research, narrative, sermon, evaluation, audio, visuals, and release pipeline started.',
+    { pipeline_version: 'sermon-experience-v4.1.1' },
   );
 
   const generationResponse = await fetch(`${origin}/api/generate-next-verse`, {
@@ -80,7 +81,37 @@ async function runGeneration(origin, job, jobId, client) {
       next_stage: result.v4_next_stage,
     },
   );
-  return result;
+
+  await addEvent(
+    client,
+    jobId,
+    'visual_plan',
+    'started',
+    `${result.reference} structured visual planning and atomic release started.`,
+    { revision_id: result.revision_id },
+  );
+  const visualRelease = await produceV4VisualRelease(client, result.revision_id, {
+    publishedBy: 'mission_control',
+    reason: 'The complete V4 sermon, Cedar audio, structured visual feed, and approved Genesis artwork passed production verification.',
+  });
+  await addEvent(
+    client,
+    jobId,
+    'publish',
+    'completed',
+    `${result.reference} published as one complete V4 episode.`,
+    visualRelease,
+  );
+
+  return {
+    ...result,
+    visual_feed_id: visualRelease.visual_feed_id,
+    album_art_asset_id: visualRelease.album_art_asset_id,
+    visual_card_count: visualRelease.card_count,
+    release_checksum: visualRelease.release_checksum,
+    v4_next_stage: 'published',
+    published: true,
+  };
 }
 
 async function handleV4ReleaseAction(req, res) {
@@ -102,9 +133,16 @@ async function handleV4ReleaseAction(req, res) {
         reason: String(req.body?.reason || 'All V4 release gates passed.'),
       }));
     }
+    if (action === 'produce_visual_release') {
+      const client = getSupabaseAdminClient(process.env);
+      return send(res, 200, await produceV4VisualRelease(client, revisionId, {
+        publishedBy: String(req.body?.published_by || 'release_manager'),
+        reason: String(req.body?.reason || 'Visual production and all V4 release gates passed.'),
+      }));
+    }
     return send(res, 400, {
       ok: false,
-      error: 'Supported V4 actions: verify_revision, publish_revision.',
+      error: 'Supported V4 actions: verify_revision, publish_revision, produce_visual_release.',
     });
   } catch (error) {
     return send(res, 500, {
@@ -122,7 +160,7 @@ export default async function handler(req, res) {
   }
 
   const action = String(req.query?.action || req.body?.action || '').trim();
-  if (action === 'verify_revision' || action === 'publish_revision') {
+  if (action === 'verify_revision' || action === 'publish_revision' || action === 'produce_visual_release') {
     return handleV4ReleaseAction(req, res);
   }
 
@@ -157,14 +195,14 @@ export default async function handler(req, res) {
       jobId,
       'pipeline_started',
       'started',
-      'Production V4 generation pipeline started.',
+      'Production V4 generation and complete release pipeline started.',
     );
 
     const origin = `https://${req.headers.host}`;
     const result = await runGeneration(origin, job, jobId, client);
     const completed = await updateJob(client, jobId, {
       status: 'succeeded',
-      current_stage: result.v4_next_stage || 'production_verified',
+      current_stage: result.v4_next_stage || 'published',
       resolved_reference: result.reference || job.requested_reference,
       transcript_word_count: result.transcript_word_count || null,
       expected_segment_count: result.segment_count || null,
@@ -178,7 +216,7 @@ export default async function handler(req, res) {
       jobId,
       'production_verified',
       'completed',
-      `${result.reference} generated with V4 sermon quality and complete audio.`,
+      `${result.reference} generated and atomically published with sermon, audio, visuals, and artwork.`,
       result,
     );
     return send(res, 200, { ok: true, job: completed, result });

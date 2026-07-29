@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import { normalizeEvaluation, spokenLanguageChecks } from './release-manager.js';
 
-export const V4_PIPELINE_VERSION = 'sermon-experience-v4.1';
-export const V4_PROMPT_VERSION = 'premium-sermon-episode-v4.1';
+export const V4_PIPELINE_VERSION = 'sermon-experience-v4.1.1';
+export const V4_PROMPT_VERSION = 'premium-sermon-episode-v4.1.1';
 export const MIN_TRANSCRIPT_WORDS = 1100;
 export const MAX_TRANSCRIPT_WORDS = 1350;
 export const TARGET_TRANSCRIPT_WORDS = '1,180 to 1,300';
@@ -14,6 +14,11 @@ const sha256 = (value) => crypto.createHash('sha256').update(String(value ?? '')
 
 export function transcriptWordCount(value) {
   return cleanText(value).split(/\s+/).filter(Boolean).length;
+}
+
+export function transcriptNeedsRepair(value) {
+  const wordCount = typeof value === 'number' ? value : transcriptWordCount(value);
+  return wordCount < MIN_TRANSCRIPT_WORDS || wordCount > MAX_TRANSCRIPT_WORDS;
 }
 
 function parseJsonContent(raw) {
@@ -89,7 +94,7 @@ function validateLesson(lesson) {
   const missing = requiredStrings.filter((key) => !cleanText(lesson?.[key]));
   if (missing.length) throw new Error(`V4 sermon is missing required fields: ${missing.join(', ')}.`);
   const wordCount = transcriptWordCount(lesson.transcript);
-  if (wordCount < MIN_TRANSCRIPT_WORDS || wordCount > MAX_TRANSCRIPT_WORDS) {
+  if (transcriptNeedsRepair(wordCount)) {
     throw new Error(`V4 transcript is ${wordCount} words; required range is ${MIN_TRANSCRIPT_WORDS}-${MAX_TRANSCRIPT_WORDS}.`);
   }
   if (asArray(lesson.key_words).length < 4) throw new Error('V4 sermon needs at least four Hebrew key words.');
@@ -248,7 +253,7 @@ ${cleanText(research.narrativeMap?.controlling_truth)}
 Current transcript:
 ${lesson.transcript}
 
-Return JSON only as {"transcript":"..."}.`;
+Return JSON only as {"transcript":"..."}. Before returning, silently count the transcript and do not return fewer than ${MIN_TRANSCRIPT_WORDS} words or more than ${MAX_TRANSCRIPT_WORDS} words.`;
 
   const repaired = await requestJson({
     apiKey,
@@ -321,7 +326,7 @@ export async function generateV4Episode(reference, canonical, env = process.env)
   let repairCount = 0;
 
   const initialWords = transcriptWordCount(lesson.transcript);
-  if (initialWords < MIN_TRANSCRIPT_WORDS || initialWords > MAX_TRANSCRIPT_WORDS) {
+  if (transcriptNeedsRepair(initialWords)) {
     lesson = await repairTranscript(reference, lesson, research, env, [
       `Bring the transcript into the required ${MIN_TRANSCRIPT_WORDS}-${MAX_TRANSCRIPT_WORDS} word range.`,
     ]);
@@ -335,6 +340,16 @@ export async function generateV4Episode(reference, canonical, env = process.env)
       ...(!review.spoken.passed ? ['Correct every mechanical spoken-language failure in the supplied report.'] : []),
     ];
     lesson = await repairTranscript(reference, lesson, research, env, directives);
+    repairCount += 1;
+    review = await evaluateSermon(reference, lesson, research, env);
+  }
+
+  const postProducerWords = transcriptWordCount(lesson.transcript);
+  if (transcriptNeedsRepair(postProducerWords)) {
+    lesson = await repairTranscript(reference, lesson, research, env, [
+      `The producer rewrite changed the transcript to ${postProducerWords} words. Preserve every approved quality improvement while bringing it into the required ${MIN_TRANSCRIPT_WORDS}-${MAX_TRANSCRIPT_WORDS} range.`,
+      'Do not weaken biblical faithfulness, Hebrew integration, spoken naturalness, emotional movement, listener engagement, or the ending.',
+    ]);
     repairCount += 1;
     review = await evaluateSermon(reference, lesson, research, env);
   }

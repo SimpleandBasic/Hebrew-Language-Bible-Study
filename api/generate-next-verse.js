@@ -12,6 +12,7 @@ export const maxDuration = 300;
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const GENESIS_VERSE_COUNTS = [0,31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26];
+const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -200,7 +201,7 @@ async function finishAudio(client, lessonOrder, target, env) {
   const serviceKey = env.HEBREW_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) throw new Error('Supabase audio credentials are missing.');
 
-  for (let attempt = 0; attempt < 14; attempt += 1) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
     const { data: track, error: trackError } = await client
       .from('hebrew_audio_tracks')
       .select('*')
@@ -218,19 +219,36 @@ async function finishAudio(client, lessonOrder, target, env) {
       return { track, segments };
     }
 
-    const audioResponse = await fetch(`${supabaseUrl}/functions/v1/hebrew-daily-audio`, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${serviceKey}`,
-        apikey: serviceKey,
-        'content-type': 'application/json',
-      },
-      body: '{}',
-      signal: AbortSignal.timeout(45000),
-    });
-    if (!audioResponse.ok) {
-      const details = await audioResponse.text().catch(() => '');
-      throw new Error(`Cedar audio generation failed (${audioResponse.status}): ${details.slice(0, 240)}`);
+    if (track.status === 'generating') {
+      await sleep(3000);
+      continue;
+    }
+
+    try {
+      const audioResponse = await fetch(`${supabaseUrl}/functions/v1/hebrew-daily-audio`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${serviceKey}`,
+          apikey: serviceKey,
+          'content-type': 'application/json',
+        },
+        body: '{}',
+        signal: AbortSignal.timeout(45000),
+      });
+      if (!audioResponse.ok) {
+        const details = await audioResponse.text().catch(() => '');
+        if ([408, 409, 504].includes(audioResponse.status)) {
+          await sleep(5000);
+          continue;
+        }
+        throw new Error(`Cedar audio generation failed (${audioResponse.status}): ${details.slice(0, 240)}`);
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError' || error?.name === 'TimeoutError' || /aborted due to timeout/i.test(error?.message || '')) {
+        await sleep(5000);
+        continue;
+      }
+      throw error;
     }
   }
 

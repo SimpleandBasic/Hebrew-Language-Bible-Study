@@ -10,6 +10,66 @@
     <link rel="stylesheet" href="visual-study-immersive.css?v=20260723-1" />
     <style>
       .manual-generate-card{margin:1rem 0 1.5rem;padding:1.1rem;border:1px solid rgba(255,255,255,.13);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));display:grid;gap:.85rem}.manual-generate-copy h3{margin:.15rem 0 .35rem}.manual-generate-copy p{margin:0;opacity:.78;line-height:1.45}.manual-generate-button{width:100%;min-height:52px;border:0;border-radius:14px;font:inherit;font-weight:800;cursor:pointer;background:#f2d29d;color:#24170d}.manual-generate-button:disabled{cursor:wait;opacity:.65}.manual-generate-status{margin:0;font-size:.9rem;line-height:1.4;min-height:1.25rem}.manual-generate-status[data-state="working"]{opacity:.85}.manual-generate-status[data-state="ready"]{color:#bfe7bd}.manual-generate-status[data-state="error"]{color:#ffb4a8}@media(min-width:720px){.manual-generate-card{grid-template-columns:1fr auto;align-items:center}.manual-generate-button{width:auto;min-width:220px}.manual-generate-status{grid-column:1/-1}}
+
+      .transport .transport-skip,
+      .explore-mini-player .mini-skip {
+        display: inline-grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border: 1.5px solid rgba(239, 198, 116, .84);
+        border-radius: 50%;
+        background: linear-gradient(145deg, rgba(239, 198, 116, .095), rgba(255, 255, 255, .018));
+        color: var(--gold);
+        box-shadow: inset 0 0 0 1px rgba(255, 245, 219, .035), 0 10px 26px rgba(0, 0, 0, .22);
+        transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease, opacity .16s ease;
+      }
+      .transport .transport-skip {
+        width: 56px;
+        height: 56px;
+        padding: 0;
+      }
+      .transport .transport-skip svg,
+      .explore-mini-player .mini-skip svg {
+        width: 25px;
+        height: 25px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .transport .transport-skip:hover:not(:disabled),
+      .explore-mini-player .mini-skip:hover:not(:disabled) {
+        border-color: #f4d58e;
+        background: linear-gradient(145deg, rgba(239, 198, 116, .16), rgba(255, 255, 255, .035));
+        box-shadow: inset 0 0 0 1px rgba(255, 245, 219, .055), 0 12px 30px rgba(0, 0, 0, .28);
+      }
+      .transport .transport-skip:active:not(:disabled),
+      .explore-mini-player .mini-skip:active:not(:disabled) {
+        transform: scale(.94);
+      }
+      .transport .transport-skip:focus-visible,
+      .explore-mini-player .mini-skip:focus-visible {
+        outline: 3px solid rgba(239, 198, 116, .42);
+        outline-offset: 4px;
+      }
+      .transport .transport-skip:disabled,
+      .explore-mini-player .mini-skip:disabled {
+        opacity: .28;
+        border-color: rgba(255, 240, 211, .16);
+        background: rgba(255, 255, 255, .018);
+        box-shadow: none;
+      }
+      .explore-mini-player .mini-skip {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+      }
+      .explore-mini-player .mini-skip svg {
+        width: 19px;
+        height: 19px;
+        stroke-width: 2.15;
+      }
     </style>
   </head>
   <body>
@@ -84,9 +144,19 @@
             <p class="section-label" id="currentSectionLabel">Opening and welcome</p>
 
             <div class="transport" aria-label="Audio controls">
-              <button id="previousSegment" type="button" aria-label="Previous section">⏮</button>
+              <button id="previousSegment" class="transport-skip" type="button" aria-label="Previous section">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m16 7-5 5 5 5"></path>
+                  <path d="m11 7-5 5 5 5"></path>
+                </svg>
+              </button>
               <button id="playPause" class="main-play" type="button" aria-label="Play">▶</button>
-              <button id="nextSegment" type="button" aria-label="Next section">⏭</button>
+              <button id="nextSegment" class="transport-skip" type="button" aria-label="Next section">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="m8 7 5 5-5 5"></path>
+                  <path d="m13 7 5 5-5 5"></path>
+                </svg>
+              </button>
             </div>
 
             <div class="seek-row">
@@ -164,13 +234,23 @@
           </section>
 
           <aside class="explore-mini-player" aria-label="Now playing">
-            <button id="explorePreviousSegment" class="mini-skip" type="button" aria-label="Previous section">⏮</button>
+            <button id="explorePreviousSegment" class="mini-skip" type="button" aria-label="Previous section">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m16 7-5 5 5 5"></path>
+                <path d="m11 7-5 5 5 5"></path>
+              </svg>
+            </button>
             <button id="explorePlayPause" class="mini-play" type="button" aria-label="Play">▶</button>
             <div class="mini-player-copy">
               <strong id="exploreNowTitle">Audio lesson</strong>
               <span id="exploreNowSection">Current section</span>
             </div>
-            <button id="exploreNextSegment" class="mini-skip" type="button" aria-label="Next section">⏭</button>
+            <button id="exploreNextSegment" class="mini-skip" type="button" aria-label="Next section">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="m8 7 5 5-5 5"></path>
+                <path d="m13 7 5 5-5 5"></path>
+              </svg>
+            </button>
             <button class="mini-open-player" data-go="player" type="button">Full player</button>
           </aside>
         </section>

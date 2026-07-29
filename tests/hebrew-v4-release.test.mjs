@@ -4,7 +4,7 @@ import { normalizeEvaluation, spokenLanguageChecks } from '../src/v4/release-man
 
 function transcript(extra = '') {
   const sentence = 'You walk into the kitchen expecting coffee, but the empty pot has apparently chosen a wilderness season. Genesis invites us to slow down, notice what our Father is doing, and discover that the smallest Hebrew detail can open a window into the whole story of Scripture. ';
-  return `${sentence.repeat(75)}${extra}`;
+  return `${sentence.repeat(28)}${extra}`;
 }
 
 test('spoken checker rejects announced sermon sections', () => {

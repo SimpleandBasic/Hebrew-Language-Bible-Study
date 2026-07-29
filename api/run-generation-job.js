@@ -38,6 +38,49 @@ async function updateJob(client, jobId, patch) {
   return data;
 }
 
+async function createManualJob(client) {
+  const { data: active, error: activeError } = await client
+    .from('hebrew_generation_jobs')
+    .select('id,requested_reference,status,current_stage')
+    .in('status', ['queued', 'running'])
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (activeError) throw activeError;
+  if (active?.length) {
+    const current = active[0];
+    const error = new Error(`${current.requested_reference || 'A Hebrew episode'} is already ${current.status}.`);
+    error.statusCode = 409;
+    error.activeJob = current;
+    throw error;
+  }
+
+  const { data: reference, error: referenceError } = await client.rpc('next_hebrew_v4_reference');
+  if (referenceError) throw referenceError;
+  if (!reference) throw new Error('The next Genesis reference could not be resolved.');
+
+  const { data: job, error: jobError } = await client
+    .from('hebrew_generation_jobs')
+    .insert({
+      requested_reference: reference,
+      mode: 'publish',
+      environment: 'production',
+      status: 'queued',
+      current_stage: 'queued',
+      attempt_count: 0,
+      max_attempts: 3,
+      requested_by: 'manual_library_v4',
+      result: {
+        source: 'scripture_library_button',
+        requested_at: new Date().toISOString(),
+        complete_release_required: true,
+      },
+    })
+    .select('*')
+    .single();
+  if (jobError) throw jobError;
+  return job;
+}
+
 async function runGeneration(origin, job, jobId, client) {
   await addEvent(
     client,
@@ -164,11 +207,23 @@ export default async function handler(req, res) {
     return handleV4ReleaseAction(req, res);
   }
 
-  const jobId = String(req.query?.job_id || req.body?.job_id || '').trim();
-  if (!jobId) return send(res, 400, { ok: false, error: 'job_id is required.' });
+  const fetchSite = String(req.headers['sec-fetch-site'] || '');
+  if (action === 'start_manual' && fetchSite !== 'same-origin') {
+    return send(res, 403, { ok: false, error: 'Manual generation requires a same-origin browser request.' });
+  }
 
   const client = getSupabaseAdminClient(process.env);
+  let jobId = String(req.query?.job_id || req.body?.job_id || '').trim();
+
   try {
+    if (action === 'start_manual') {
+      if (req.method !== 'POST') return send(res, 405, { ok: false, error: 'Manual generation requires POST.' });
+      const manualJob = await createManualJob(client);
+      jobId = manualJob.id;
+    }
+
+    if (!jobId) return send(res, 400, { ok: false, error: 'job_id is required.' });
+
     const { data: job, error: jobError } = await client
       .from('hebrew_generation_jobs')
       .select('*')
@@ -222,18 +277,25 @@ export default async function handler(req, res) {
     return send(res, 200, { ok: true, job: completed, result });
   } catch (error) {
     const message = error?.message || 'Mission Control job failed.';
-    try {
-      await updateJob(client, jobId, {
-        status: 'failed',
-        current_stage: 'failed',
-        error_message: message,
-        finished_at: new Date().toISOString(),
-      });
-      await addEvent(client, jobId, 'failed', 'failed', message);
-    } catch (loggingError) {
-      console.error('Could not record Mission Control failure.', loggingError);
+    if (jobId) {
+      try {
+        await updateJob(client, jobId, {
+          status: 'failed',
+          current_stage: 'failed',
+          error_message: message,
+          finished_at: new Date().toISOString(),
+        });
+        await addEvent(client, jobId, 'failed', 'failed', message);
+      } catch (loggingError) {
+        console.error('Could not record Mission Control failure.', loggingError);
+      }
     }
     console.error('Mission Control job failed.', error);
-    return send(res, 500, { ok: false, job_id: jobId, error: message });
+    return send(res, Number(error?.statusCode) || 500, {
+      ok: false,
+      job_id: jobId || null,
+      active_job: error?.activeJob || null,
+      error: message,
+    });
   }
 }

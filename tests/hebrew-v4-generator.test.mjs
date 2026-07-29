@@ -4,6 +4,7 @@ import {
   MAX_TRANSCRIPT_WORDS,
   MIN_TRANSCRIPT_WORDS,
   TARGET_TRANSCRIPT_WORDS,
+  transcriptNeedsRepair,
   transcriptWordCount,
 } from '../src/v4/episode-generator.js';
 import { spokenLanguageChecks } from '../src/v4/release-manager.js';
@@ -16,6 +17,13 @@ test('V4 generator word range matches the atomic release spoken gate', () => {
 
 test('V4 transcript counter handles whitespace without inflating the count', () => {
   assert.equal(transcriptWordCount('  one   two\nthree  '), 3);
+});
+
+test('a producer rewrite below 1,100 words is sent through final length repair', () => {
+  assert.equal(transcriptNeedsRepair(1068), true);
+  assert.equal(transcriptNeedsRepair(1100), false);
+  assert.equal(transcriptNeedsRepair(1350), false);
+  assert.equal(transcriptNeedsRepair(1351), true);
 });
 
 test('a 1,120-word natural transcript is accepted by the release checker', () => {

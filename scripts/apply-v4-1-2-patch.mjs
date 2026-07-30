@@ -20,8 +20,14 @@ const resilientMarker = [
   "    throw new Error(`V4.1.2 patch marker missing: ${label}`);",
   "  }",
 ].join('\n');
-const patchSource = originalPatchSource.replace(brittleMarker, resilientMarker);
+
+let patchSource = originalPatchSource.replace(brittleMarker, resilientMarker);
 if (patchSource === originalPatchSource) throw new Error('Could not activate the resilient V4.1.2 patch marker.');
+
+const brokenReleaseTestPatch = "  source = replaceOnce(source, `  return \\`${sentence.repeat(28)}\\${extra}\\`;`, `  return \\`${sentence.repeat(36)}\\${extra}\\`;`, 'release test transcript length');";
+const fixedReleaseTestPatch = "  source = replaceOnce(source, \"  return `${sentence.repeat(28)}${extra}`;\", \"  return `${sentence.repeat(36)}${extra}`;\", 'release test transcript length');";
+patchSource = patchSource.replace(brokenReleaseTestPatch, fixedReleaseTestPatch);
+if (patchSource.includes(brokenReleaseTestPatch)) throw new Error('Could not repair the V4.1.2 release-test patch interpolation.');
 
 const runtimePath = join(scriptDirectory, '.apply-v4-1-2-runtime.mjs');
 writeFileSync(runtimePath, patchSource, 'utf8');

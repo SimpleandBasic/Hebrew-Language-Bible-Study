@@ -34,11 +34,70 @@ const robustEvidenceParser = Buffer.from('ICBjb25zdCBoYXJkR2F0ZVJlc3VsdHMgPSByYX
 patchSource = patchSource.replace(oldEvidenceParser, robustEvidenceParser);
 if (patchSource.includes(oldEvidenceParser)) throw new Error('Could not upgrade the V4.1.2 evidence parser.');
 
+function applyEvidenceExtractionFallback() {
+  const generatorPath = 'src/v4/episode-generator.js';
+  let source = readFileSync(generatorPath, 'utf8');
+  const helperMarker = 'async function completeEvaluationEvidence(reference, lesson, raw, env) {';
+  if (!source.includes(helperMarker)) {
+    const helper = [
+      'async function completeEvaluationEvidence(reference, lesson, raw, env) {',
+      '  const initial = normalizeEvaluation(raw, lesson.transcript);',
+      '  if (initial.evidenceSpans.length >= 10) return raw;',
+      '  const apiKey = env.OPENAI_API_KEY;',
+      "  if (!apiKey) throw new Error('OPENAI_API_KEY is missing from the Vercel project.');",
+      "  const model = env.HEBREW_EVIDENCE_MODEL || env.HEBREW_GENERATION_MODEL || 'gpt-4.1';",
+      '  const prompt = `Extract exact transcript evidence for every evaluation dimension for ${reference}.',
+      '',
+      'Dimensions:',
+      'conversational_flow, storytelling, curiosity, hebrew_integration, biblical_faithfulness, christ_centeredness, emotional_movement, educational_value, spoken_naturalness, listener_engagement.',
+      '',
+      'Existing scores:',
+      '${JSON.stringify(raw?.scores || raw)}',
+      '',
+      'Transcript:',
+      '${lesson.transcript}',
+      '',
+      'Return JSON only as {"evidence_spans":[{"dimension":"conversational_flow","quote":"exact 8-40 word transcript excerpt","explanation":"why this exact excerpt supports the score"}, ...]}.',
+      'Return exactly one object for each of the ten dimensions. Copy every quote verbatim from the transcript. Do not paraphrase, change punctuation, use ellipses, or invent evidence.`;',
+      '  const extracted = await requestJson({',
+      '    apiKey,',
+      '    model,',
+      '    temperature: 0,',
+      '    maxTokens: 3200,',
+      '    timeoutMs: 90000,',
+      '    messages: [',
+      "      { role: 'system', content: 'You are a forensic Christian sermon evidence editor. Copy exact transcript excerpts and return valid JSON only.' },",
+      '      { role: \'user\', content: prompt },',
+      '    ],',
+      '  });',
+      '  const evidenceSpans = extracted?.evidence_spans || extracted?.evidenceSpans || extracted;',
+      '  return { ...raw, evidence_spans: evidenceSpans };',
+      '}',
+      '',
+    ].join('\n');
+    const insertionMarker = 'async function evaluateSermon(reference, lesson, research, env) {';
+    if (!source.includes(insertionMarker)) throw new Error('Could not find the V4 evaluator insertion marker.');
+    source = source.replace(insertionMarker, `${helper}${insertionMarker}`);
+  }
+
+  const oldReturn = '  return { evaluation: normalizeEvaluation(raw, lesson.transcript), spoken, raw, model };';
+  const newReturn = [
+    '  const completedRaw = await completeEvaluationEvidence(reference, lesson, raw, env);',
+    '  return { evaluation: normalizeEvaluation(completedRaw, lesson.transcript), spoken, raw: completedRaw, model };',
+  ].join('\n');
+  if (!source.includes(newReturn)) {
+    if (!source.includes(oldReturn)) throw new Error('Could not find the V4 evaluator return marker.');
+    source = source.replace(oldReturn, newReturn);
+  }
+  writeFileSync(generatorPath, source, 'utf8');
+}
+
 const runtimePath = join(scriptDirectory, '.apply-v4-1-2-runtime.mjs');
 writeFileSync(runtimePath, patchSource, 'utf8');
 
 try {
   await import(`${pathToFileURL(runtimePath).href}?run=${Date.now()}`);
+  applyEvidenceExtractionFallback();
 } finally {
   rmSync(runtimePath, { force: true });
 }

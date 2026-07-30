@@ -80,12 +80,13 @@ const replacement = [
   '  });',
   '  return { ...raw, evidence_spans: evidenceSpans };',
   '}',
-  '',
-  'async function evaluateSermon',
 ].join('\n');
 
-const helperPattern = /async function completeEvaluationEvidence\(reference, lesson, raw, env\) \{[\s\S]*?\n\}\n\nasync function evaluateSermon/;
-if (!helperPattern.test(source)) throw new Error('Could not find the V4.1.2 evidence helper to replace.');
-source = source.replace(helperPattern, replacement);
+const helperStart = source.indexOf('async function completeEvaluationEvidence(reference, lesson, raw, env) {');
+const evaluatorStart = source.indexOf('async function evaluateSermon(', helperStart);
+if (helperStart < 0 || evaluatorStart < 0 || evaluatorStart <= helperStart) {
+  throw new Error('Could not locate the V4.1.2 evidence helper function boundaries.');
+}
+source = `${source.slice(0, helperStart)}${replacement}\n\n${source.slice(evaluatorStart)}`;
 writeFileSync(path, source, 'utf8');
 console.log('Applied V4.1.2 sentence-indexed evidence extraction.');

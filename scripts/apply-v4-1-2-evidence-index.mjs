@@ -6,7 +6,7 @@ let source = readFileSync(path, 'utf8');
 const replacement = [
   'async function completeEvaluationEvidence(reference, lesson, raw, env) {',
   '  const initial = normalizeEvaluation(raw, lesson.transcript);',
-  '  if (initial.evidenceSpans.length >= 10) return raw;',
+  '  if (initial.hardGateResults?.evidence_complete === true) return raw;',
   '  const apiKey = env.OPENAI_API_KEY;',
   "  if (!apiKey) throw new Error('OPENAI_API_KEY is missing from the Vercel project.');",
   "  const model = env.HEBREW_EVIDENCE_MODEL || env.HEBREW_GENERATION_MODEL || 'gpt-4.1';",

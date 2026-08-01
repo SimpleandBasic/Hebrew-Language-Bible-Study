@@ -5,9 +5,9 @@
   "private": true,
   "description": "GitHub Pages Hebrew reader with Vercel-hosted MCP, audio-library, and visual-study services.",
   "scripts": {
-    "postinstall": "node scripts/apply-v4-1-2-patch.mjs && node scripts/apply-v4-1-2-evidence-index.mjs && node scripts/apply-v4-1-2-research-reuse.mjs && node scripts/check-all.js",
-    "check": "node scripts/apply-v4-1-2-patch.mjs && node scripts/apply-v4-1-2-evidence-index.mjs && node scripts/apply-v4-1-2-research-reuse.mjs && node scripts/check-all.js",
-    "test": "node scripts/apply-v4-1-2-patch.mjs && node scripts/apply-v4-1-2-evidence-index.mjs && node scripts/apply-v4-1-2-research-reuse.mjs && node --test tests/hebrew-v4-generator.test.mjs tests/hebrew-v4-release.test.mjs tests/visual-study-logic.test.mjs && node tests/audio-logic.test.mjs"
+    "postinstall": "node scripts/apply-v4-1-2-patch.mjs && node scripts/apply-v4-1-2-evidence-index.mjs && node scripts/apply-v4-1-2-research-reuse.mjs && node scripts/apply-full-sermon-audio-rebuild.mjs && node scripts/check-all.js",
+    "check": "node scripts/apply-v4-1-2-patch.mjs && node scripts/apply-v4-1-2-evidence-index.mjs && node scripts/apply-v4-1-2-research-reuse.mjs && node scripts/apply-full-sermon-audio-rebuild.mjs && node scripts/check-all.js",
+    "test": "node scripts/apply-v4-1-2-patch.mjs && node scripts/apply-v4-1-2-evidence-index.mjs && node scripts/apply-v4-1-2-research-reuse.mjs && node scripts/apply-full-sermon-audio-rebuild.mjs && node --test tests/hebrew-v4-generator.test.mjs tests/hebrew-v4-release.test.mjs tests/visual-study-logic.test.mjs && node tests/audio-logic.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "latest"

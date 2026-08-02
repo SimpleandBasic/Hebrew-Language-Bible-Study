@@ -19,6 +19,7 @@ const create = await textRequest(`${origin}/api/hebrew-episode-share`, {
 assert(create.response.status === 200, `share POST failed (${create.response.status}): ${create.text}`);
 const created = JSON.parse(create.text);
 assert(created.url?.startsWith(`${origin}/listen/`), 'share POST did not return the production single-episode URL');
+assert(!created.url.includes('genesis-2-5-genesis-2-5'), 'share URL repeated the Scripture reference');
 
 const page = await textRequest(created.url, { headers: { accept: 'text/html' } });
 assert(page.response.status === 200, `shared page failed (${page.response.status})`);
@@ -57,4 +58,4 @@ assert(libraryJs.includes('navigator.share') && libraryJs.includes('navigator.cl
 assert(episodeJs.includes('navigator.share') && episodeJs.includes('renderTranscript'), 'public player sharing or transcript rendering is missing');
 assert(episodeCss.includes('@media (max-width: 520px)') && page.text.includes('viewport-fit=cover'), 'iPhone-sized responsive support is missing');
 
-console.log('Live episode sharing smoke passed: POST, public page, one-episode API, transcript, MP3, native-share path, fallback, and mobile CSS.');
+console.log('Live episode sharing smoke passed: POST, clean canonical URL, public page, one-episode API, transcript, MP3, native-share path, fallback, and mobile CSS.');

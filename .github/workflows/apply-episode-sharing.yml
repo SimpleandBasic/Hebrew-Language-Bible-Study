@@ -1,0 +1,54 @@
+name: Apply Hebrew episode sharing
+
+on:
+  push:
+    branches:
+      - feature/hebrew-episode-sharing-v1-20260802
+
+permissions:
+  contents: write
+
+jobs:
+  merge-test-commit:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Merge into current production source
+        run: python3 scripts/apply-episode-sharing-merge.py
+      - name: Install dependencies without lifecycle mutations
+        run: npm install --ignore-scripts
+      - name: Syntax and repository checks
+        run: npm run check
+      - name: Full existing Hebrew app test suite
+        run: npm test
+      - name: Security boundary checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -R "SUPABASE_SERVICE_ROLE_KEY" -- library.html library.css library.js episode.js episode.css
+          grep -q "SUPABASE_SERVICE_ROLE_KEY" api/_lib/hebrewEpisodeShare.js
+          grep -q 'is_published: "eq.true"' api/_lib/hebrewEpisodeShare.js
+          grep -q 'status: "eq.ready"' api/_lib/hebrewEpisodeShare.js
+          grep -q 'navigator.share' library.js
+          grep -q 'navigator.share' episode.js
+          git diff --check
+      - name: Commit tested implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/episode-sharing.payload.*
+          rm -f scripts/merge-episode-sharing-package.py
+          rm -f scripts/apply-episode-sharing-merge.py
+          rm -f .github/workflows/apply-episode-sharing.yml
+          git config user.name "Michael Agent Office"
+          git config user.email "49638634+SimpleandBasic@users.noreply.github.com"
+          git add -A
+          git commit -m "Add secure single-episode sharing"
+          git push origin HEAD

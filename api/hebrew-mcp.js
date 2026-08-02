@@ -1,6 +1,14 @@
 import { runTool } from '../src/index.js';
 import { chatTools } from '../src/tool-schemas.js';
 import { getSupabaseAdminClient } from '../src/supabase-client.js';
+import {
+  getOrCreateEpisodeShare,
+  getSharedEpisode,
+  publicOrigin,
+  setCommonSecurityHeaders,
+  shareUrlFor,
+} from '../src/hebrewEpisodeShare.js';
+import { renderSharedEpisodePage, renderUnavailablePage } from '../src/hebrewEpisodePage.js';
 
 const WORD = 'he' + 'brew';
 const STATUS_TOOL = 'get_' + WORD + '_app_status';
@@ -17,7 +25,17 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+function sendEpisodeJson(res, status, body) {
+  setCommonSecurityHeaders(res);
+  res.statusCode = status;
+  res.setHeader('content-type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(body));
+}
+
 async function readJson(req) {
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
+  if (typeof req.body === 'string') return req.body ? JSON.parse(req.body) : null;
+  if (Buffer.isBuffer(req.body)) return req.body.length ? JSON.parse(req.body.toString('utf8')) : null;
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
   const raw = Buffer.concat(chunks).toString('utf8');
@@ -167,7 +185,69 @@ async function handle(message, options) {
   return fail(id, -32601, 'Unknown method: ' + message?.method);
 }
 
+async function handleEpisodeShare(req, res) {
+  if (req.method === 'OPTIONS') {
+    setCommonSecurityHeaders(res);
+    res.statusCode = 204;
+    return res.end();
+  }
+
+  try {
+    const options = { env: process.env };
+    if (req.method === 'POST') {
+      const body = await readJson(req);
+      const { share, track } = await getOrCreateEpisodeShare(body?.trackId, options);
+      return sendEpisodeJson(res, 200, {
+        url: shareUrlFor(req, share),
+        title: track.track_title,
+        reference: track.verse_reference,
+      });
+    }
+    if (req.method === 'GET') {
+      const token = String(req.query?.share || req.query?.token || '');
+      return sendEpisodeJson(res, 200, { episode: await getSharedEpisode(token, options) });
+    }
+    res.setHeader('Allow', 'GET, POST');
+    return sendEpisodeJson(res, 405, { error: 'Method not allowed.' });
+  } catch (error) {
+    console.error('Hebrew episode share API failed.', error);
+    const status = Number(error.status) || (error instanceof SyntaxError ? 400 : 500);
+    return sendEpisodeJson(res, status, {
+      error: status >= 500 ? 'The shared episode service is temporarily unavailable.' : error.message,
+    });
+  }
+}
+
+async function handleEpisodePage(req, res) {
+  setCommonSecurityHeaders(res, { cache: true });
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; img-src 'self' https://*.supabase.co data:; media-src 'self' https://*.supabase.co blob:; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"
+  );
+  if (req.method !== 'GET') {
+    res.statusCode = 405;
+    return res.end(renderUnavailablePage('Method not allowed.'));
+  }
+
+  try {
+    const token = String(req.query?.share || '');
+    const episode = await getSharedEpisode(token, { env: process.env });
+    const origin = publicOrigin(req);
+    const canonicalUrl = `${origin}/listen/${encodeURIComponent(token)}/${encodeURIComponent(episode.slug)}`;
+    res.statusCode = 200;
+    return res.end(renderSharedEpisodePage({ episode, canonicalUrl, origin }));
+  } catch (error) {
+    console.error('Hebrew shared episode page failed.', error);
+    res.statusCode = Number(error.status) || 500;
+    return res.end(renderUnavailablePage(error.status === 404 ? error.message : 'Please try the link again later.'));
+  }
+}
+
 export default async function handler(req, res) {
+  if (String(req.query?.episode_share || '') === '1') return handleEpisodeShare(req, res);
+  if (String(req.query?.episode_page || '') === '1') return handleEpisodePage(req, res);
+
   if (req.method === 'OPTIONS') return send(res, 204, {});
   if (req.method === 'GET') return send(res, 200, { ok: true, name: WORD + '-developer-mcp', path: '/mcp', tools: chatTools.map((tool) => tool.name) });
   if (req.method !== 'POST') return send(res, 405, { ok: false, error: 'Method not allowed.' });

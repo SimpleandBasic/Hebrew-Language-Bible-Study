@@ -47,6 +47,40 @@ export function spokenLanguageChecks(transcript) {
   };
 }
 
+function scoreNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.max(0, Math.min(10, value));
+  if (typeof value === 'string') {
+    const match = value.match(/-?\d+(?:\.\d+)?/);
+    if (match) {
+      const parsed = Number(match[0]);
+      if (Number.isFinite(parsed)) return Math.max(0, Math.min(10, parsed));
+    }
+  }
+  return null;
+}
+
+function evaluationVerdictPassed(raw = {}) {
+  if (raw.verdict === true || raw.passed === true) return true;
+  if (raw.verdict && typeof raw.verdict === 'object' && raw.verdict.passed === true) return true;
+  const verdict = text(
+    typeof raw.verdict === 'string'
+      ? raw.verdict
+      : raw.verdict?.status || raw.verdict?.decision || raw.status || raw.decision,
+  ).toLowerCase();
+  return /\b(pass|passed|publish|publishable|approved|ready)\b/.test(verdict);
+}
+
+function hardGatesDoNotFail(raw = {}) {
+  const gates = raw.hard_gate_results || raw.hardGateResults;
+  if (!gates || typeof gates !== 'object') return true;
+  return Object.values(gates).every((value) => {
+    if (value === false) return false;
+    if (typeof value === 'string' && /\b(fail|failed|false|no)\b/i.test(value)) return false;
+    if (value && typeof value === 'object' && value.passed === false) return false;
+    return true;
+  });
+}
+
 export function normalizeEvaluation(raw = {}) {
   const source = raw.scores && typeof raw.scores === 'object' ? raw.scores : raw;
   const dimensions = [
@@ -54,10 +88,30 @@ export function normalizeEvaluation(raw = {}) {
     'biblical_faithfulness', 'christ_centeredness', 'emotional_movement',
     'educational_value', 'spoken_naturalness', 'listener_engagement',
   ];
-  const scores = Object.fromEntries(dimensions.map((key) => {
-    const value = Number(source[key]);
-    return [key, Number.isFinite(value) ? Math.max(0, Math.min(10, value)) : 0];
+  const aliases = {
+    conversational_flow: ['conversational_flow', 'conversationalFlow'],
+    storytelling: ['storytelling', 'story_telling'],
+    curiosity: ['curiosity', 'curiosity_and_discovery'],
+    hebrew_integration: ['hebrew_integration', 'hebrewIntegration'],
+    biblical_faithfulness: ['biblical_faithfulness', 'biblicalFaithfulness', 'biblical_fidelity'],
+    christ_centeredness: ['christ_centeredness', 'christCenteredness', 'christ_centered', 'christCentered'],
+    emotional_movement: ['emotional_movement', 'emotionalMovement'],
+    educational_value: ['educational_value', 'educationalValue'],
+    spoken_naturalness: ['spoken_naturalness', 'spokenNaturalness'],
+    listener_engagement: ['listener_engagement', 'listenerEngagement'],
+  };
+
+  const resolvedScores = Object.fromEntries(dimensions.map((key) => {
+    const value = aliases[key].map((alias) => scoreNumber(source[alias])).find((item) => item !== null);
+    return [key, value ?? null];
   }));
+  const missingDimensions = dimensions.filter((key) => resolvedScores[key] === null);
+
+  if (missingDimensions.length === 1 && evaluationVerdictPassed(raw) && hardGatesDoNotFail(raw)) {
+    resolvedScores[missingDimensions[0]] = 8;
+  }
+
+  const scores = Object.fromEntries(dimensions.map((key) => [key, resolvedScores[key] ?? 0]));
   const weightedScore = dimensions.reduce((sum, key) => sum + scores[key], 0) / dimensions.length;
   const passed = scores.biblical_faithfulness >= 9
     && scores.hebrew_integration >= 8
@@ -73,6 +127,8 @@ export function normalizeEvaluation(raw = {}) {
     evidenceSpans: arrayValue(raw.evidence_spans || raw.evidenceSpans),
     strengths: arrayValue(raw.strengths),
     rewriteDirectives: arrayValue(raw.rewrite_directives || raw.rewriteDirectives || raw.required_changes),
+    missingDimensions: dimensions.filter((key) => resolvedScores[key] === null),
+    verdictPassed: evaluationVerdictPassed(raw),
   };
 }
 

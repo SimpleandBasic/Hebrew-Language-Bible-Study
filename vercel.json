@@ -9,6 +9,9 @@
     { "source": "/listen/:token/:slug", "destination": "/api/hebrew-mcp?episode_page=1&share=:token" },
     { "source": "/listen/:token", "destination": "/api/hebrew-mcp?episode_page=1&share=:token" }
   ],
+  "crons": [
+    { "path": "/api/daily-generation", "schedule": "0 8,9,10 * * *" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

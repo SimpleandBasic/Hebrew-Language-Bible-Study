@@ -207,6 +207,10 @@ export default async function handler(req, res) {
     return handleV4ReleaseAction(req, res);
   }
 
+  if (req.method !== 'POST') {
+    return send(res, 405, { ok: false, error: 'Generation job execution requires POST.' });
+  }
+
   const fetchSite = String(req.headers['sec-fetch-site'] || '');
   if (action === 'start_manual' && fetchSite !== 'same-origin') {
     return send(res, 403, { ok: false, error: 'Manual generation requires a same-origin browser request.' });

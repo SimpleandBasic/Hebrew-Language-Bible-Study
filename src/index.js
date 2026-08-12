@@ -11,7 +11,6 @@ import {
   prepareHebrewAudioTrack,
 } from './actions/audio-tools.js';
 import {
-  generateNextSpokenHebrewAudioSegment,
   getSpokenHebrewAudioStatus,
   getSpokenHebrewLearningState,
   getSpokenHebrewLesson,
@@ -19,6 +18,7 @@ import {
   recordSpokenHebrewPractice,
   setSpokenHebrewCurrentLesson,
 } from './actions/spoken-hebrew-tools.js';
+import { generateNextSpokenHebrewAudioSegment } from './actions/spoken-hebrew-audio-tools.js';
 
 export const toolRegistry = {
   get_hebrew_app_status: { handler: getHebrewAppStatus },

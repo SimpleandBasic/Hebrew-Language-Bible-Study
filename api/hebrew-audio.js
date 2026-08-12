@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 const DEFAULT_MODEL = "gpt-4o-mini-tts";
 const DEFAULT_VOICE = "cedar";
 const DEFAULT_INSTRUCTIONS = "Speak warmly, clearly, reverently, and naturally. Pronounce Hebrew carefully. Do not add stage directions or commentary that is not present in the input.";
+const SPOKEN_DEFAULT_INSTRUCTIONS = "Speak clearly and naturally. For Hebrew text, use careful Modern Israeli Hebrew pronunciation. Do not add words that are not in the input.";
 
 function json(response, status, payload) {
   response.status(status).json(payload);
@@ -85,6 +86,12 @@ function segmentAudioPath(track, segment) {
   return `audio/genesis/${chapter}/${verse}/${track.script_version || "v1"}/${order}-${type}.mp3`;
 }
 
+function spokenSegmentAudioPath(lesson, segment) {
+  const order = String(segment.sort_order).padStart(3, "0");
+  const type = String(segment.segment_type || "segment").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `audio/spoken/${lesson.slug}/${lesson.script_version || "v1"}/${order}-${type}.mp3`;
+}
+
 function estimateMp3DurationSeconds(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 4) return null;
   let offset = 0;
@@ -122,6 +129,15 @@ async function findTrack(body) {
   }
   const reference = String(body.verseReference || "Genesis 1:14");
   const rows = await supabaseRequest(`/rest/v1/hebrew_audio_tracks?select=*&verse_reference=eq.${encodeURIComponent(reference)}&limit=1`);
+  return rows?.[0] || null;
+}
+
+async function findSpokenLesson(body) {
+  const lessonId = String(body.lessonId || body.lesson_id || "").trim();
+  const slug = String(body.slug || "").trim();
+  if (!lessonId && !slug) return null;
+  const filter = lessonId ? `id=eq.${encodeURIComponent(lessonId)}` : `slug=eq.${encodeURIComponent(slug)}`;
+  const rows = await supabaseRequest(`/rest/v1/hebrew_spoken_lessons?select=*&${filter}&limit=1`);
   return rows?.[0] || null;
 }
 
@@ -192,6 +208,95 @@ async function updateTrackCompletion(track) {
   return { remaining, ready, duration };
 }
 
+async function updateSpokenLessonCompletion(lesson) {
+  const segments = await supabaseRequest(`/rest/v1/hebrew_spoken_segments?select=id,segment_type,status,duration_seconds,pause_after_ms&lesson_id=eq.${encodeURIComponent(lesson.id)}&order=sort_order.asc`);
+  const playable = segments.filter((segment) => segment.segment_type !== "silence");
+  const remaining = playable.filter((segment) => segment.status !== "ready").length;
+  const duration = segments.reduce((sum, segment) => sum + (Number(segment.duration_seconds) || 0) + ((Number(segment.pause_after_ms) || 0) / 1000), 0);
+  const ready = remaining === 0 && playable.length > 0;
+  await patchRow("hebrew_spoken_lessons", lesson.id, {
+    audio_status: ready ? "ready" : "generating",
+    total_duration_seconds: duration || null,
+  });
+  return { remaining, ready, duration };
+}
+
+async function generateSpokenNext(body, response) {
+  const lesson = await findSpokenLesson(body);
+  if (!lesson) return json(response, 404, { error: "Spoken Hebrew lesson not found." });
+
+  const segments = await supabaseRequest(`/rest/v1/hebrew_spoken_segments?select=*&lesson_id=eq.${encodeURIComponent(lesson.id)}&order=sort_order.asc`);
+  const model = process.env.HEBREW_TTS_MODEL || DEFAULT_MODEL;
+  const voice = process.env.HEBREW_TTS_VOICE || DEFAULT_VOICE;
+
+  let target = null;
+  for (const segment of segments) {
+    if (segment.segment_type === "silence") continue;
+    const speechSettings = segment.speech_settings || {};
+    const instructions = segment.voice_instructions || SPOKEN_DEFAULT_INSTRUCTIONS;
+    const checksum = checksumFor(segment, model, segment.voice_profile || voice, instructions, speechSettings);
+    if (segment.status !== "ready" || !segment.audio_path || segment.checksum !== checksum) {
+      target = { segment, checksum, instructions, speechSettings };
+      break;
+    }
+  }
+
+  if (!target) {
+    const completion = await updateSpokenLessonCompletion(lesson);
+    return json(response, 200, { lessonId: lesson.id, lessonSlug: lesson.slug, generated: false, reusedAll: true, ...completion });
+  }
+
+  const { segment, checksum, instructions, speechSettings } = target;
+  if (!String(segment.spoken_text || "").trim()) return json(response, 409, { error: `Segment ${segment.id} has no spoken text.` });
+
+  await patchRow("hebrew_spoken_lessons", lesson.id, { audio_status: "generating" });
+  await patchRow("hebrew_spoken_segments", segment.id, {
+    status: "generating",
+    error_information: null,
+    generation_model: model,
+    voice_profile: segment.voice_profile || voice,
+    voice_instructions: instructions,
+    checksum,
+  });
+
+  try {
+    const audioBuffer = await generateSpeech(segment.spoken_text, model, segment.voice_profile || voice, instructions, speechSettings);
+    const audioPath = spokenSegmentAudioPath(lesson, segment);
+    await uploadAudio(audioPath, audioBuffer);
+    const duration = estimateMp3DurationSeconds(audioBuffer);
+    await patchRow("hebrew_spoken_segments", segment.id, {
+      status: "ready",
+      audio_path: audioPath,
+      duration_seconds: duration,
+      checksum,
+      generation_model: model,
+      voice_profile: segment.voice_profile || voice,
+      voice_instructions: instructions,
+      error_information: null,
+      generated_at: new Date().toISOString(),
+    });
+    const completion = await updateSpokenLessonCompletion(lesson);
+    return json(response, 200, {
+      lessonId: lesson.id,
+      lessonSlug: lesson.slug,
+      generated: true,
+      segmentId: segment.id,
+      segmentLabel: segment.label,
+      audioPath,
+      durationSeconds: duration,
+      ...completion,
+    });
+  } catch (error) {
+    await patchRow("hebrew_spoken_segments", segment.id, {
+      status: "failed",
+      checksum,
+      error_information: String(error.message || error).slice(0, 2000),
+    }).catch(() => null);
+    await patchRow("hebrew_spoken_lessons", lesson.id, { audio_status: "failed" }).catch(() => null);
+    throw error;
+  }
+}
+
 export default async function hebrewAudio(request, response) {
   response.setHeader("Cache-Control", "no-store");
   response.setHeader("Content-Type", "application/json");
@@ -206,7 +311,8 @@ export default async function hebrewAudio(request, response) {
     if (!valid) return json(response, 401, { error: "Invalid admin credential." });
 
     const body = await readJsonBody(request);
-    if (body.operation !== "generate-next") return json(response, 400, { error: "Supported operation: generate-next." });
+    if (body.operation === "generate-spoken-next") return generateSpokenNext(body, response);
+    if (body.operation !== "generate-next") return json(response, 400, { error: "Supported operations: generate-next, generate-spoken-next." });
 
     const track = await findTrack(body);
     if (!track) return json(response, 404, { error: "Audio track not found." });
@@ -292,6 +398,7 @@ export const __test = {
   checksumFor,
   estimateMp3DurationSeconds,
   segmentAudioPath,
+  spokenSegmentAudioPath,
   serviceAuthHeaders,
   trackCompletionPatch,
 };

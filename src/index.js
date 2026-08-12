@@ -19,6 +19,10 @@ import {
   setSpokenHebrewCurrentLesson,
 } from './actions/spoken-hebrew-tools.js';
 import { generateNextSpokenHebrewAudioSegment } from './actions/spoken-hebrew-audio-tools.js';
+import {
+  getHebrewSermonTranscript,
+  listHebrewSermonTranscripts,
+} from './actions/sermon-transcript-tools.js';
 
 export const toolRegistry = {
   get_hebrew_app_status: { handler: getHebrewAppStatus },
@@ -29,6 +33,8 @@ export const toolRegistry = {
   prepare_hebrew_audio_track: { handler: prepareHebrewAudioTrack },
   generate_next_hebrew_audio_segment: { handler: generateNextHebrewAudioSegment },
   get_hebrew_audio_status: { handler: getHebrewAudioStatus },
+  get_hebrew_sermon_transcript: { handler: getHebrewSermonTranscript },
+  list_hebrew_sermon_transcripts: { handler: listHebrewSermonTranscripts },
   get_spoken_hebrew_learning_state: { handler: getSpokenHebrewLearningState },
   list_spoken_hebrew_lessons: { handler: listSpokenHebrewLessons },
   get_spoken_hebrew_lesson: { handler: getSpokenHebrewLesson },

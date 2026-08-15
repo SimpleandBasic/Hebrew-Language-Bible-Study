@@ -4,7 +4,7 @@ export function renderSharedEpisodePage({ episode, canonicalUrl, origin }) {
   const title = escapeHtml(episode.title);
   const reference = escapeHtml(episode.reference);
   const description = escapeHtml(`Listen to ${episode.reference} in the Hebrew Bible Study audio library.`);
-  const artwork = escapeHtml(episode.artworkUrl || `${origin}/assets/genesis-cover.webp`);
+  const artwork = escapeHtml(episode.artworkUrl || `${origin}/assets/genesis-cover.svg?v=20260815-share-artwork-fix`);
   return `<!doctype html>
 <html lang="en">
 <head>

@@ -1,13 +1,13 @@
 (() => {
   "use strict";
 
-  const FALLBACK_COVER = "assets/genesis-cover.svg?v=20260718-1";
+  const FALLBACK_COVER = "/assets/genesis-cover.svg?v=20260718-1";
   const COVER_PARTS = [
-    "assets/genesis-cover-parts/00.b64?v=20260722-1",
-    "assets/genesis-cover-parts/01.b64?v=20260722-1",
-    "assets/genesis-cover-parts/02.b64?v=20260722-1",
-    "assets/genesis-cover-parts/03.b64?v=20260722-1",
-    "assets/genesis-cover-parts/04.b64?v=20260722-1",
+    "/assets/genesis-cover-parts/00.b64?v=20260722-1",
+    "/assets/genesis-cover-parts/01.b64?v=20260722-1",
+    "/assets/genesis-cover-parts/02.b64?v=20260722-1",
+    "/assets/genesis-cover-parts/03.b64?v=20260722-1",
+    "/assets/genesis-cover-parts/04.b64?v=20260722-1",
   ];
 
   let safeCover = FALLBACK_COVER;

@@ -69,6 +69,7 @@ export function renderSharedEpisodePage({ episode, canonicalUrl, origin }) {
       </section>
     </section>
   </main>
+  <script src="/artwork-fix.js?v=20260815-shared-main-art" defer></script>
   <script src="/episode.js?v=20260802-share-v1" defer></script>
 </body>
 </html>`;

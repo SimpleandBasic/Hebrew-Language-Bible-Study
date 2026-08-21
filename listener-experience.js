@@ -98,6 +98,12 @@
     return true;
   }
 
+  function genesisPosition(reference) {
+    const match = String(reference || '').match(/^Genesis\s+(\d+):(\d+)$/i);
+    if (!match) return -1;
+    return (Number(match[1]) * 1000) + Number(match[2]);
+  }
+
   async function loadLatestTrack() {
     if (!supabaseUrl || !publicKey) return null;
     const query = new URLSearchParams({
@@ -105,12 +111,20 @@
       status: 'eq.ready',
       is_published: 'eq.true',
       order: 'published_at.desc',
-      limit: '1',
+      limit: '200',
     });
     const response = await fetch(`${supabaseUrl}/rest/v1/hebrew_audio_tracks?${query}`, { headers: headers() });
     if (!response.ok) return null;
     const rows = await response.json().catch(() => []);
-    return Array.isArray(rows) ? rows[0] || null : null;
+    if (!Array.isArray(rows) || !rows.length) return null;
+
+    // "Latest" means the furthest published Genesis devotional in the study sequence,
+    // not the most recently republished maintenance/backfill track.
+    return rows.slice().sort((a, b) => {
+      const positionDifference = genesisPosition(b.verse_reference) - genesisPosition(a.verse_reference);
+      if (positionDifference) return positionDifference;
+      return new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime();
+    })[0] || null;
   }
 
   function formatDuration(seconds) {

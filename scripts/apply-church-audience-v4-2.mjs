@@ -136,7 +136,7 @@ function patchRequestedReferenceRebuild() {
   }
 
   if (!source.includes('resolveTarget(client, req.body?.requested_reference, req.body?.mode)')) {
-    const targetCallPattern = /const target = await resolveTarget\(client,\s*req\.body\?\.requested_reference(?:,\s*req\.body\?\.mode)?\);/;
+    const targetCallPattern = /const target = await resolveTarget\([^;]+\);/;
     if (!targetCallPattern.test(source)) {
       throw new Error('Church-audience patch marker missing: rebuild mode resolver call');
     }
@@ -146,14 +146,14 @@ function patchRequestedReferenceRebuild() {
     );
   }
 
-  if (!source.includes("const recovery = req.body?.mode === 'sermon_rebuild'")) {
-    const recoveryPattern = /const recovery = await findRecoverableRevision\(client, target\.reference\);/;
+  if (!source.includes("req.body?.mode === 'sermon_rebuild' || forceRegenerate")) {
+    const recoveryPattern = /const recovery = [\s\S]*?findRecoverableRevision\(client, target\.reference\);/;
     if (!recoveryPattern.test(source)) {
       throw new Error('Church-audience patch marker missing: fresh rebuild revision');
     }
     source = source.replace(
       recoveryPattern,
-      "const recovery = req.body?.mode === 'sermon_rebuild'\n      ? null\n      : await findRecoverableRevision(client, target.reference);",
+      "const recovery = (req.body?.mode === 'sermon_rebuild' || forceRegenerate)\n      ? null\n      : await findRecoverableRevision(client, target.reference);",
     );
   }
 

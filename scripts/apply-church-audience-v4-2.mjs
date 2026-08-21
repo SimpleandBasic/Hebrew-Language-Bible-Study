@@ -77,11 +77,13 @@ function patchGenerator() {
     '- no private-listener assumptions, personal callbacks, or niche application that makes the sermon feel written for one specific person',
   ].join('\n');
   if (!source.includes('church-audience accessibility:')) {
-    source = replaceOnce(
-      source,
-      'Hard gates:\n',
-      `Hard gates:\n${evaluationAudienceGates}\n`,
-      'evaluation audience gates',
+    const evaluatorReturnMarker = 'Return JSON only with scores, hard_gate_results, evidence_spans, strengths, rewrite_directives, and verdict.';
+    if (!source.includes(evaluatorReturnMarker)) {
+      throw new Error('Church-audience patch marker missing: evaluation audience gates');
+    }
+    source = source.replace(
+      evaluatorReturnMarker,
+      `${evaluationAudienceGates}\n\n${evaluatorReturnMarker}`,
     );
   }
 

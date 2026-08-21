@@ -102,21 +102,9 @@ function patchGenerator() {
 function patchRequestedReferenceRebuild() {
   const path = 'api/generate-next-verse.js';
   let source = readFileSync(path, 'utf8');
-  const oldResolve = `async function resolveTarget(client, requestedReference) {
-  const { data: expectedReference, error } = await client.rpc('next_hebrew_v4_reference');
-  if (error) throw error;
-  const expected = parseReference(expectedReference);
-  if (!expected) throw new Error(\`The next atomic Genesis reference is invalid: \${expectedReference || 'empty'}.\`);
 
-  const requested = String(requestedReference || '').trim();
-  if (requested && requested.toLowerCase() !== expected.reference.toLowerCase()) {
-    const stale = new Error(\`This job requested \${requested}, but the next incomplete episode is \${expected.reference}.\`);
-    stale.statusCode = 409;
-    throw stale;
-  }
-  return expected;
-}`;
-  const newResolve = `async function resolveTarget(client, requestedReference, mode = 'publish') {
+  if (!source.includes("mode === 'sermon_rebuild'")) {
+    const newResolve = `async function resolveTarget(client, requestedReference, mode = 'publish') {
   const requested = String(requestedReference || '').trim();
   if (mode === 'sermon_rebuild') {
     const rebuildTarget = parseReference(requested);
@@ -140,19 +128,35 @@ function patchRequestedReferenceRebuild() {
   }
   return expected;
 }`;
-  source = replaceOnce(source, oldResolve, newResolve, 'rebuild reference resolver');
-  source = replaceOnce(
-    source,
-    '    const target = await resolveTarget(client, req.body?.requested_reference);',
-    '    const target = await resolveTarget(client, req.body?.requested_reference, req.body?.mode);',
-    'rebuild mode resolver call',
-  );
-  source = replaceOnce(
-    source,
-    '    const recovery = await findRecoverableRevision(client, target.reference);',
-    "    const recovery = req.body?.mode === 'sermon_rebuild'\n      ? null\n      : await findRecoverableRevision(client, target.reference);",
-    'fresh rebuild revision',
-  );
+    const resolvePattern = /async function resolveTarget\([^)]*\) \{[\s\S]*?\n\}\n\nasync function fetchCanonicalVerse/;
+    if (!resolvePattern.test(source)) {
+      throw new Error('Church-audience patch marker missing: rebuild reference resolver');
+    }
+    source = source.replace(resolvePattern, `${newResolve}\n\nasync function fetchCanonicalVerse`);
+  }
+
+  if (!source.includes('resolveTarget(client, req.body?.requested_reference, req.body?.mode)')) {
+    const targetCallPattern = /const target = await resolveTarget\(client,\s*req\.body\?\.requested_reference(?:,\s*req\.body\?\.mode)?\);/;
+    if (!targetCallPattern.test(source)) {
+      throw new Error('Church-audience patch marker missing: rebuild mode resolver call');
+    }
+    source = source.replace(
+      targetCallPattern,
+      'const target = await resolveTarget(client, req.body?.requested_reference, req.body?.mode);',
+    );
+  }
+
+  if (!source.includes("const recovery = req.body?.mode === 'sermon_rebuild'")) {
+    const recoveryPattern = /const recovery = await findRecoverableRevision\(client, target\.reference\);/;
+    if (!recoveryPattern.test(source)) {
+      throw new Error('Church-audience patch marker missing: fresh rebuild revision');
+    }
+    source = source.replace(
+      recoveryPattern,
+      "const recovery = req.body?.mode === 'sermon_rebuild'\n      ? null\n      : await findRecoverableRevision(client, target.reference);",
+    );
+  }
+
   writeFileSync(path, source, 'utf8');
 }
 

@@ -5,6 +5,7 @@ export function renderSharedEpisodePage({ episode, canonicalUrl, origin }) {
   const reference = escapeHtml(episode.reference);
   const description = escapeHtml(`Listen to ${episode.reference} in the Hebrew Bible Study audio library.`);
   const artwork = escapeHtml(episode.artworkUrl || `${origin}/assets/genesis-cover.svg?v=20260815-share-artwork-fix`);
+  const continueUrl = `/library.html?listen=${encodeURIComponent(episode.reference)}#player`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -21,7 +22,7 @@ export function renderSharedEpisodePage({ episode, canonicalUrl, origin }) {
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
   <meta property="og:image" content="${artwork}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/episode.css?v=20260815-full-artwork" />
+  <link rel="stylesheet" href="/episode.css?v=20260821-listener-v1" />
 </head>
 <body>
   <main class="shared-shell" id="sharedEpisode" aria-live="polite">
@@ -61,6 +62,10 @@ export function renderSharedEpisodePage({ episode, canonicalUrl, origin }) {
         <audio id="sharedAudio" preload="metadata" playsinline webkit-playsinline></audio>
         <button id="reshareEpisode" class="reshare" type="button">Share this episode</button>
         <p id="sharedStatus" class="status" role="status"></p>
+        <div class="shared-next-actions">
+          <a class="continue-library" href="${escapeHtml(continueUrl)}">Keep listening in the full library →</a>
+          <a class="support-free" href="/support.html">Support this free devotional</a>
+        </div>
       </section>
 
       <section class="transcript-card">
@@ -76,5 +81,5 @@ export function renderSharedEpisodePage({ episode, canonicalUrl, origin }) {
 }
 
 export function renderUnavailablePage(message) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>Episode unavailable</title><link rel="stylesheet" href="/episode.css?v=20260815-full-artwork" /></head><body><main class="shared-shell"><section class="unavailable"><p class="eyebrow">Hebrew Bible Study</p><h1>Episode unavailable</h1><p>${escapeHtml(message)}</p></section></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>Episode unavailable</title><link rel="stylesheet" href="/episode.css?v=20260821-listener-v1" /></head><body><main class="shared-shell"><section class="unavailable"><p class="eyebrow">Hebrew Bible Study</p><h1>Episode unavailable</h1><p>${escapeHtml(message)}</p></section></main></body></html>`;
 }

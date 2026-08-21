@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const path = 'src/v4/episode-generator.js';
 let source = readFileSync(path, 'utf8');
 
-const oldGate = '  if (initial.evidenceSpans.length >= 10) return raw;';
+const oldGate = '  if (initial.hardGateResults?.evidence_complete === true) return raw;';
 const newGate = `  const requiredEvidenceDimensions = [
     'conversational_flow', 'storytelling', 'curiosity', 'hebrew_integration',
     'biblical_faithfulness', 'christ_centeredness', 'emotional_movement',

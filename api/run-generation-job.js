@@ -211,9 +211,12 @@ export default async function handler(req, res) {
     return send(res, 405, { ok: false, error: 'Generation job execution requires POST.' });
   }
 
-  const fetchSite = String(req.headers['sec-fetch-site'] || '');
-  if (action === 'start_manual' && fetchSite !== 'same-origin') {
-    return send(res, 403, { ok: false, error: 'Manual generation requires a same-origin browser request.' });
+  if (action === 'start_manual') {
+    const expected = process.env.HEBREW_AUDIO_ADMIN_KEY || '';
+    const supplied = req.headers['x-hebrew-admin-key'] || '';
+    if (!safeEqual(supplied, expected)) {
+      return send(res, 401, { ok: false, error: 'Manual generation requires an admin credential.' });
+    }
   }
 
   const client = getSupabaseAdminClient(process.env);

@@ -176,7 +176,7 @@
   function renderLibrary() {
     const availableVerses = state.verses.length;
     const readyTracks = state.tracks.filter((track) => track.status === "ready" && track.is_published).length;
-    elements.libraryCounts.textContent = `${availableVerses} verses · ${readyTracks} audio lesson${readyTracks === 1 ? "" : "s"}`;
+    elements.libraryCounts.textContent = `Genesis: ${availableVerses} verses · ${readyTracks} audio lesson${readyTracks === 1 ? "" : "s"}`;
     elements.albumGrid.innerHTML = "";
 
     const visibleAlbums = state.albums.filter((album) => album.is_visible).sort((a, b) => a.display_order - b.display_order);
@@ -200,6 +200,7 @@
       });
       elements.albumGrid.append(card);
     }
+    window.PHILIPPIANS_STUDY?.appendAlbumCard?.(elements.albumGrid);
     renderContinueListening();
   }
 
@@ -336,6 +337,8 @@
     if (hash === "genesis") {
       renderGenesis();
       showScreen("genesis", { updateHash: false });
+    } else if (hash === "philippians" && window.PHILIPPIANS_STUDY?.openBook) {
+      window.PHILIPPIANS_STUDY.openBook();
     } else {
       showScreen("library", { updateHash: false });
     }

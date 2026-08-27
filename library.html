@@ -4,9 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#17120d" />
-    <title>Hebrew Scripture Library</title>
+    <title>Scripture Devotional Library</title>
     <link rel="preconnect" href="https://cmryhxnhnltrewvduico.supabase.co" crossorigin />
     <link rel="stylesheet" href="library.css?v=20260722-visual-v2-1" />
+    <link rel="stylesheet" href="philippians.css?v=20260827-1" />
     <link rel="stylesheet" href="visual-study-immersive.css?v=20260723-1" />
     <style>
       .manual-generate-card{margin:1rem 0 1.5rem;padding:1.1rem;border:1px solid rgba(255,255,255,.13);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));display:grid;gap:.85rem}.manual-generate-copy h3{margin:.15rem 0 .35rem}.manual-generate-copy p{margin:0;opacity:.78;line-height:1.45}.manual-generate-button{width:100%;min-height:52px;border:0;border-radius:14px;font:inherit;font-weight:800;cursor:pointer;background:#f2d29d;color:#24170d}.manual-generate-button:disabled{cursor:wait;opacity:.65}.manual-generate-status{margin:0;font-size:.9rem;line-height:1.4;min-height:1.25rem}.manual-generate-status[data-state="working"]{opacity:.85}.manual-generate-status[data-state="ready"]{color:#bfe7bd}.manual-generate-status[data-state="error"]{color:#ffb4a8}@media(min-width:720px){.manual-generate-card{grid-template-columns:1fr auto;align-items:center}.manual-generate-button{width:auto;min-width:220px}.manual-generate-status{grid-column:1/-1}}
@@ -76,8 +77,8 @@
     <div class="app-frame">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Hebrew Bible Study</p>
-          <h1>Scripture Library</h1>
+          <p class="eyebrow">Scripture Study</p>
+          <h1>Devotional Library</h1>
         </div>
         <a class="read-link" href="index.html">Read</a>
       </header>
@@ -85,9 +86,9 @@
       <main id="app" aria-live="polite">
         <section class="screen is-active" id="libraryScreen" data-screen="library">
           <div class="hero-copy">
-            <p class="eyebrow">Audio Scripture Library</p>
+            <p class="eyebrow">Audio &amp; Deep Study Library</p>
             <h2>Listen slowly. Study deeply.</h2>
-            <p>Books are albums. Chapters are sections. Verse lessons are tracks.</p>
+            <p>Books are collections. Genesis keeps the Hebrew audio journey; Philippians opens a Greek New Testament study lane.</p>
           </div>
 
           <section id="continueSection" class="continue-card" hidden>
@@ -133,6 +134,98 @@
             </div>
           </section>
           <div id="chapterList"></div>
+        </section>
+
+
+        <section class="screen" id="philippiansScreen" data-screen="philippians" hidden>
+          <button class="back-button" data-go="library" type="button">← Library</button>
+          <section class="album-hero philippians-hero">
+            <img src="assets/philippians-cover.svg?v=20260827-1" alt="Philippians Greek New Testament study artwork" />
+            <div>
+              <p class="eyebrow">New Testament · Greek</p>
+              <h2>Philippians</h2>
+              <p id="philippiansSubtitle">Joy, partnership, humility, and life in Christ — studied through the Greek New Testament.</p>
+              <div class="album-stats" id="philippiansStats">Loading Greek lessons…</div>
+            </div>
+          </section>
+          <div id="philippiansChapterList"></div>
+        </section>
+
+        <section class="screen" id="philippiansLessonScreen" data-screen="philippians-lesson" hidden>
+          <button class="back-button" data-philippians-go="book" type="button">← Philippians</button>
+          <article class="greek-study-shell">
+            <header class="greek-study-header">
+              <span class="language-badge">Greek New Testament · KJV</span>
+              <p class="eyebrow" id="philippiansLessonReference">Philippians 1:1</p>
+              <h2 id="philippiansLessonTitle">Before the Role, Remember Whose You Are</h2>
+              <p class="study-description" id="philippiansLessonDescription"></p>
+            </header>
+
+            <section class="kjv-source-card" aria-labelledby="philippiansKjvHeading">
+              <p class="eyebrow">King James Version</p>
+              <h3 id="philippiansKjvHeading">Read the verse</h3>
+              <blockquote id="philippiansKjvText"></blockquote>
+            </section>
+
+            <section class="greek-source-card" aria-labelledby="philippiansGreekHeading">
+              <p class="eyebrow">Greek Text</p>
+              <h3 id="philippiansGreekHeading">Look closely at the language</h3>
+              <p class="greek-text" id="philippiansGreekText" lang="grc"></p>
+              <p class="transliteration-text" id="philippiansTransliteration"></p>
+              <p class="source-note">Greek base text: <span id="philippiansGreekSource">SBL Greek New Testament (SBLGNT), CC BY 4.0</span>. The KJV remains the English teaching text.</p>
+            </section>
+
+            <section class="study-section-card">
+              <p class="eyebrow">Controlling Truth</p>
+              <h3>The center of the verse</h3>
+              <p class="study-memory" id="philippiansCentralTruth"></p>
+            </section>
+
+            <section class="study-section-card">
+              <p class="eyebrow">Greek Word Study</p>
+              <h3>Words and forms that carry the sentence</h3>
+              <div class="greek-word-grid" id="philippiansGreekWords"></div>
+              <p class="guardrail-note">Greek word meaning, grammar, theological interpretation, and personal application are kept separate on purpose. A lexicon is not a fortune cookie.</p>
+            </section>
+
+            <section class="study-section-card">
+              <p class="eyebrow">Historical &amp; Literary Context</p>
+              <h3>Where this sentence lives</h3>
+              <div class="context-list" id="philippiansContext"></div>
+            </section>
+
+            <section class="study-section-card">
+              <p class="eyebrow">Whole-Bible Connections</p>
+              <h3>Cross references with guardrails</h3>
+              <div class="crossref-list" id="philippiansCrossRefs"></div>
+            </section>
+
+            <section class="study-section-card">
+              <p class="eyebrow">Full Teaching</p>
+              <h3>Sermon study</h3>
+              <p class="study-sermon" id="philippiansSermon"></p>
+            </section>
+
+            <section class="study-section-card">
+              <p class="eyebrow">See Jesus Here</p>
+              <h3>Christ in the verse</h3>
+              <p id="philippiansJesus"></p>
+              <p class="guardrail-note" id="philippiansJesusGuardrail"></p>
+            </section>
+
+            <section class="study-section-card">
+              <p class="eyebrow">Practice</p>
+              <h3>Carry it into today</h3>
+              <p id="philippiansApplication"></p>
+              <p class="study-memory" id="philippiansMemoryPhrase"></p>
+            </section>
+
+            <section class="study-section-card study-prayer">
+              <p class="eyebrow">Prayer</p>
+              <h3>Bring the verse before our Father</h3>
+              <p id="philippiansPrayer"></p>
+            </section>
+          </article>
         </section>
 
         <section class="screen" id="playerScreen" data-screen="player" hidden>
@@ -284,7 +377,8 @@
     <script src="supabase-config.js?v=20260630-2"></script>
     <script src="artwork-fix.js?v=20260722-1"></script>
     <script src="audio-player-fix.js?v=20260721-3"></script>
-    <script src="library.js?v=20260717-1"></script>
+    <script src="philippians.js?v=20260827-1"></script>
+    <script src="library.js?v=20260827-philippians-1"></script>
     <script src="manual-generator.js?v=20260728-1"></script>
     <script src="visual-study.js?v=20260722-visual-v2-1"></script>
     <script src="visual-study-immersive.js?v=20260723-1"></script>

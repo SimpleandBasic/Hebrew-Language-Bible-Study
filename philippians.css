@@ -1,0 +1,35 @@
+.philippians-album-card .album-card-copy .eyebrow{color:#d9b9ff}
+.philippians-album-card .album-meta{color:#cdb7e8}
+.philippians-hero{background:linear-gradient(145deg,rgba(92,55,122,.2),rgba(255,255,255,.025))}
+.philippians-hero img{background:#1a101f}
+.greek-study-shell{border-radius:30px;padding:18px;display:grid;gap:20px}
+.greek-study-header{padding:8px 2px 2px}
+.greek-study-header h2{margin:7px 0 8px;font-size:clamp(2rem,8vw,3.4rem);line-height:1.04}
+.greek-study-header .study-description{margin:0;color:var(--muted);line-height:1.6}
+.greek-source-card,.kjv-source-card,.study-section-card{border:1px solid var(--line);border-radius:22px;padding:18px;background:rgba(255,255,255,.025)}
+.greek-source-card{background:linear-gradient(145deg,rgba(107,67,143,.16),rgba(255,255,255,.025))}
+.greek-source-card .greek-text{margin:8px 0 12px;font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.45rem,5.8vw,2.25rem);line-height:1.55;color:var(--text)}
+.greek-source-card .transliteration-text{margin:0;color:#d8c6e9;line-height:1.6;font-style:italic}
+.source-note{margin:12px 0 0;color:var(--muted);font-size:.76rem;line-height:1.45}
+.kjv-source-card blockquote{margin:8px 0 0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.15rem,4.6vw,1.55rem);line-height:1.7;color:var(--text)}
+.study-section-card h3{margin:5px 0 14px;font-size:1.35rem}
+.study-section-card p{color:var(--muted);line-height:1.7}
+.greek-word-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.greek-word-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:rgba(255,255,255,.025)}
+.greek-word-card .greek-word{display:block;font-family:Georgia,"Times New Roman",serif;font-size:1.65rem;color:#eadbff;margin-bottom:5px}
+.greek-word-card .greek-translit{display:block;color:var(--gold);font-weight:800;margin-bottom:9px}
+.greek-word-card dl{margin:0;display:grid;gap:8px}
+.greek-word-card dl div{display:grid;gap:2px}
+.greek-word-card dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#b6a7c4}
+.greek-word-card dd{margin:0;color:var(--muted);line-height:1.45}
+.study-sermon{white-space:pre-wrap;color:var(--text)!important;font-family:Georgia,"Times New Roman",serif;font-size:1.05rem;line-height:1.82!important}
+.context-list,.crossref-list{display:grid;gap:11px}
+.context-item,.crossref-item{padding:13px 0;border-top:1px solid var(--line)}
+.context-item:first-child,.crossref-item:first-child{border-top:0}
+.context-item strong,.crossref-item strong{display:block;color:var(--text);margin-bottom:4px}
+.context-item span,.crossref-item span{display:block;color:var(--muted);line-height:1.55}
+.guardrail-note{margin-top:14px;padding:14px;border-radius:15px;border:1px solid rgba(239,198,116,.18);background:rgba(239,198,116,.055);color:var(--muted);line-height:1.55}
+.study-prayer{border-color:rgba(239,198,116,.26);background:rgba(239,198,116,.055)}
+.study-memory{font-weight:850;color:var(--text)!important;font-size:1.08rem}
+.language-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(215,185,255,.25);background:rgba(117,69,154,.13);color:#eadbff;font-size:.72rem;font-weight:850}
+@media(max-width:620px){.greek-study-shell{padding:4px}.greek-word-grid{grid-template-columns:1fr}}

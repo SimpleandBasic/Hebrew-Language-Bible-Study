@@ -337,6 +337,8 @@
     if (hash === "genesis") {
       renderGenesis();
       showScreen("genesis", { updateHash: false });
+    } else if (hash === "philippians" && window.PHILIPPIANS_STUDY?.openBook) {
+      window.PHILIPPIANS_STUDY.openBook();
     } else {
       showScreen("library", { updateHash: false });
     }

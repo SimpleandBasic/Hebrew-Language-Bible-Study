@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" role="img" aria-labelledby="title desc">
+  <title id="title">Philippians devotional artwork</title>
+  <desc id="desc">A dark purple and gold book cover with a road, letter, and Greek title motif.</desc>
+  <defs>
+    <radialGradient id="bg" cx="48%" cy="18%" r="90%">
+      <stop offset="0" stop-color="#563570"/>
+      <stop offset=".48" stop-color="#24182d"/>
+      <stop offset="1" stop-color="#120d16"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0" stop-color="#9f7034"/>
+      <stop offset=".45" stop-color="#f2d294"/>
+      <stop offset="1" stop-color="#b47b36"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="16"/></filter>
+  </defs>
+  <rect width="900" height="900" fill="url(#bg)"/>
+  <circle cx="450" cy="235" r="150" fill="#c59a59" opacity=".09" filter="url(#glow)"/>
+  <path d="M105 755 C235 650 286 600 338 520 C402 422 470 370 608 292 C676 253 725 219 797 145" fill="none" stroke="url(#gold)" stroke-width="12" opacity=".72"/>
+  <path d="M105 775 C240 672 304 617 358 536 C423 440 490 391 624 316 C698 275 750 234 818 164" fill="none" stroke="#f4e0ba" stroke-width="2.2" opacity=".45"/>
+  <rect x="165" y="145" width="570" height="392" rx="28" fill="#17101d" stroke="#d1ab69" stroke-width="2" opacity=".91"/>
+  <path d="M222 220 H678 M222 258 H638 M222 296 H665 M222 334 H615" stroke="#d9c6e7" stroke-width="4" opacity=".16" stroke-linecap="round"/>
+  <path d="M235 402 C330 355 420 449 515 395 C575 360 635 372 675 401" fill="none" stroke="#d1ab69" stroke-width="5" opacity=".35"/>
+  <text x="450" y="630" text-anchor="middle" fill="#f1dcaa" font-family="Georgia, serif" font-size="79" font-weight="700">PHILIPPIANS</text>
+  <text x="450" y="690" text-anchor="middle" fill="#d5bceb" font-family="Georgia, serif" font-size="35" letter-spacing="4">ΠΡΟΣ ΦΙΛΙΠΠΗΣΙΟΥΣ</text>
+  <text x="450" y="742" text-anchor="middle" fill="#aa96b8" font-family="system-ui, sans-serif" font-size="23" letter-spacing="5">GREEK NEW TESTAMENT STUDY</text>
+  <circle cx="450" cy="808" r="5" fill="#e7c883"/>
+  <path d="M408 808 H492" stroke="#e7c883" stroke-width="2" opacity=".7"/>
+</svg>

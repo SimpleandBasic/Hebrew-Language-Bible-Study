@@ -33,3 +33,14 @@
 .study-memory{font-weight:850;color:var(--text)!important;font-size:1.08rem}
 .language-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(215,185,255,.25);background:rgba(117,69,154,.13);color:#eadbff;font-size:.72rem;font-weight:850}
 @media(max-width:620px){.greek-study-shell{padding:4px}.greek-word-grid{grid-template-columns:1fr}}
+
+.philippians-card-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.philippians-card-tool{appearance:none;border:1px solid rgba(215,185,255,.22);border-radius:999px;background:rgba(117,69,154,.12);color:var(--text);padding:8px 12px;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;touch-action:manipulation}
+.philippians-card-tool:hover{background:rgba(117,69,154,.2)}
+.philippians-card-tool:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.philippians-card-tool.is-speaking{border-color:rgba(239,198,116,.42);background:rgba(239,198,116,.12);color:var(--gold)}
+.philippians-paste-note{box-sizing:border-box;width:100%;min-height:92px;margin-top:12px;padding:12px 13px;border:1px solid rgba(215,185,255,.2);border-radius:14px;background:rgba(0,0,0,.14);color:var(--text);font:inherit;font-size:.9rem;line-height:1.5;resize:vertical}
+.philippians-paste-note::placeholder{color:var(--muted)}
+.greek-word-card>.philippians-card-tools{justify-content:flex-start;gap:6px;margin-top:11px;padding-top:10px}
+.greek-word-card>.philippians-card-tools .philippians-card-tool{padding:6px 9px;font-size:.7rem}
+@media(max-width:620px){.philippians-card-tools{justify-content:flex-start}.philippians-card-tool{min-height:40px;padding:9px 13px}}

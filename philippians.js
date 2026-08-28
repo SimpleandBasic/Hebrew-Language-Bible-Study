@@ -6,6 +6,10 @@
   const PUBLIC_KEY = String(config.publicKey || "");
   const state = { series: null, lessons: [], albumCard: null };
 
+  const CARD_TOOL_SELECTOR = ".kjv-source-card, .greek-source-card, .study-section-card, .greek-word-card";
+  const CARD_NOTE_PREFIX = "philippians-card-note-v1:";
+  const speechState = { button: null, chunks: [], index: 0, lang: "en-US" };
+
   function headers() {
     const result = { apikey: PUBLIC_KEY };
     if (PUBLIC_KEY.startsWith("eyJ")) result.Authorization = "Bearer " + PUBLIC_KEY;
@@ -23,6 +27,200 @@
     return String(value ?? "").replace(/[&<>'"]/g, (character) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
     })[character]);
+  }
+
+  function lessonCards() {
+    const shell = document.querySelector(".greek-study-shell");
+    return shell ? Array.from(shell.querySelectorAll(CARD_TOOL_SELECTOR)) : [];
+  }
+
+  function cardText(card) {
+    const clone = card.cloneNode(true);
+    clone.querySelectorAll(".philippians-card-tools, .philippians-paste-note").forEach((node) => node.remove());
+    return String(clone.textContent || "").replace(/\s+/g, " ").trim();
+  }
+
+  function cardNoteKey(card) {
+    const reference = document.querySelector("#philippiansLessonReference")?.textContent?.trim() || "philippians";
+    const cards = lessonCards();
+    const index = Math.max(0, cards.indexOf(card));
+    const label = card.querySelector("h3, h4, .greek-word")?.textContent?.trim() || "card";
+    return CARD_NOTE_PREFIX + reference + ":" + index + ":" + label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function ensurePasteArea(card) {
+    let area = card.querySelector(":scope > .philippians-paste-note");
+    if (area) return area;
+    area = document.createElement("textarea");
+    area.className = "philippians-paste-note";
+    area.setAttribute("aria-label", "Pasted notes for this study card");
+    area.placeholder = "Paste a note here…";
+    area.hidden = true;
+    area.addEventListener("input", () => {
+      try { localStorage.setItem(cardNoteKey(card), area.value); } catch { /* Local notes are best effort. */ }
+    });
+    card.append(area);
+    return area;
+  }
+
+  function syncPasteArea(card) {
+    const area = card.querySelector(":scope > .philippians-paste-note");
+    if (!area) return;
+    let saved = "";
+    try { saved = localStorage.getItem(cardNoteKey(card)) || ""; } catch { saved = ""; }
+    area.value = saved;
+    area.hidden = !saved;
+  }
+
+  function flashButtonLabel(button, label, fallback) {
+    const original = fallback || button.dataset.defaultLabel || button.textContent;
+    button.textContent = label;
+    window.setTimeout(() => {
+      if (button === speechState.button) return;
+      button.textContent = original;
+    }, 1100);
+  }
+
+  async function copyCard(card, button) {
+    const text = cardText(card);
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const fallback = document.createElement("textarea");
+      fallback.value = text;
+      fallback.setAttribute("readonly", "");
+      fallback.style.position = "fixed";
+      fallback.style.opacity = "0";
+      document.body.append(fallback);
+      fallback.select();
+      document.execCommand("copy");
+      fallback.remove();
+    }
+    flashButtonLabel(button, "Copied ✓", "Copy");
+  }
+
+  async function pasteIntoCard(card, button) {
+    const area = ensurePasteArea(card);
+    let pasted = "";
+    try {
+      if (navigator.clipboard?.readText) pasted = await navigator.clipboard.readText();
+    } catch {
+      pasted = "";
+    }
+
+    area.hidden = false;
+    if (pasted) {
+      area.value = area.value ? area.value + "\n" + pasted : pasted;
+      area.dispatchEvent(new Event("input", { bubbles: true }));
+      flashButtonLabel(button, "Pasted ✓", "Paste");
+      return;
+    }
+
+    area.placeholder = "Tap here, then use Paste from the iOS menu.";
+    area.focus();
+    flashButtonLabel(button, "Paste here", "Paste");
+  }
+
+  function splitSpeechText(text) {
+    const pieces = String(text || "").match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
+    const chunks = [];
+    let current = "";
+    pieces.forEach((piece) => {
+      const next = (current + " " + piece.trim()).trim();
+      if (next.length > 240 && current) {
+        chunks.push(current);
+        current = piece.trim();
+      } else {
+        current = next;
+      }
+    });
+    if (current) chunks.push(current);
+    return chunks.length ? chunks : [String(text || "").trim()];
+  }
+
+  function resetSpeechButton() {
+    if (speechState.button) {
+      speechState.button.textContent = speechState.button.dataset.defaultLabel || "Listen";
+      speechState.button.classList.remove("is-speaking");
+      speechState.button.setAttribute("aria-pressed", "false");
+    }
+    speechState.button = null;
+    speechState.chunks = [];
+    speechState.index = 0;
+  }
+
+  function stopSpeech() {
+    try { window.speechSynthesis?.cancel(); } catch { /* Best effort. */ }
+    resetSpeechButton();
+  }
+
+  function speakNextChunk() {
+    if (!speechState.button || speechState.index >= speechState.chunks.length) {
+      resetSpeechButton();
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(speechState.chunks[speechState.index]);
+    utterance.lang = speechState.lang;
+    utterance.rate = speechState.lang.startsWith("el") ? 0.82 : 0.94;
+    const voices = window.speechSynthesis?.getVoices?.() || [];
+    const prefix = speechState.lang.split("-")[0].toLowerCase();
+    const voice = voices.find((item) => String(item.lang || "").toLowerCase().startsWith(prefix));
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => {
+      speechState.index += 1;
+      speakNextChunk();
+    };
+    utterance.onerror = () => resetSpeechButton();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function listenToCard(card, button) {
+    if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+      flashButtonLabel(button, "Unavailable", "Listen");
+      return;
+    }
+    if (speechState.button === button) {
+      stopSpeech();
+      return;
+    }
+
+    stopSpeech();
+    const text = cardText(card);
+    if (!text) return;
+    speechState.button = button;
+    speechState.chunks = splitSpeechText(text);
+    speechState.index = 0;
+    speechState.lang = card.querySelector('[lang="grc"], .greek-word') ? "el-GR" : "en-US";
+    button.textContent = "Stop";
+    button.classList.add("is-speaking");
+    button.setAttribute("aria-pressed", "true");
+    speakNextChunk();
+  }
+
+  function decorateLessonCards() {
+    lessonCards().forEach((card) => {
+      let toolbar = card.querySelector(":scope > .philippians-card-tools");
+      if (!toolbar) {
+        toolbar = document.createElement("div");
+        toolbar.className = "philippians-card-tools";
+        toolbar.setAttribute("aria-label", "Study card tools");
+        toolbar.innerHTML = [
+          '<button class="philippians-card-tool" type="button" data-card-action="copy">Copy</button>',
+          '<button class="philippians-card-tool" type="button" data-card-action="paste">Paste</button>',
+          '<button class="philippians-card-tool" type="button" data-card-action="listen" aria-pressed="false">Listen</button>'
+        ].join("");
+
+        toolbar.querySelectorAll("button").forEach((button) => {
+          button.dataset.defaultLabel = button.textContent;
+        });
+        toolbar.querySelector('[data-card-action="copy"]').addEventListener("click", () => copyCard(card, toolbar.querySelector('[data-card-action="copy"]')));
+        toolbar.querySelector('[data-card-action="paste"]').addEventListener("click", () => pasteIntoCard(card, toolbar.querySelector('[data-card-action="paste"]')));
+        toolbar.querySelector('[data-card-action="listen"]').addEventListener("click", () => listenToCard(card, toolbar.querySelector('[data-card-action="listen"]')));
+        card.append(toolbar);
+      }
+      syncPasteArea(card);
+    });
   }
 
   function showScreen(name) {
@@ -159,6 +357,7 @@
   }
 
   function openLesson(lesson) {
+    stopSpeech();
     const payload = lessonPayload(lesson);
     const research = lesson.research_dossier || {};
     document.querySelector("#philippiansLessonReference").textContent = lesson.reference;
@@ -178,10 +377,12 @@
     renderWords(payload.key_words || research.greek_observations);
     renderContext(research);
     renderCrossReferences(payload.cross_references || research.cross_references);
+    decorateLessonCards();
     showScreen("philippians-lesson");
   }
 
   function openBook() {
+    stopSpeech();
     renderBook();
     showScreen("philippians");
   }

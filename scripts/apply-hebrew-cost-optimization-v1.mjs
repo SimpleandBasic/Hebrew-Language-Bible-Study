@@ -228,7 +228,7 @@ Narrative map:
 - the Jesus connection keeps its stated guardrail
 - the ending lands emotionally, includes prayer, and creates next-verse anticipation
 
-\${marker}`);
+${marker}`);
     }
     return block;
   });
@@ -242,7 +242,7 @@ Narrative map:
     throw new Error(\`Hebrew cost guard stopped the episode after \${repairBudget.used} paid sermon repairs.\`);
   }
   if (repairBudget) repairBudget.used += 1;
-\${marker}`);
+${marker}`);
     }
     if (!block.includes("stageType: 'sermon_repair'")) {
       block = block.replace('    messages: [', `    usageSink: env.__hebrewUsageSink,

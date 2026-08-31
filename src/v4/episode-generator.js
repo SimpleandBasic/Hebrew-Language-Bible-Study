@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
 import { normalizeEvaluation, spokenLanguageChecks } from './release-manager.js';
 
-export const V4_PIPELINE_VERSION = 'sermon-experience-v4.1.1';
-export const V4_PROMPT_VERSION = 'premium-sermon-episode-v4.1.1';
+export const V4_PIPELINE_VERSION = 'sermon-experience-v4.2.0';
+export const V4_PROMPT_VERSION = 'premium-sermon-episode-v4.2.0';
 export const MIN_TRANSCRIPT_WORDS = 1100;
 export const MAX_TRANSCRIPT_WORDS = 1350;
 export const TARGET_TRANSCRIPT_WORDS = '1,180 to 1,300';
@@ -11,6 +11,89 @@ const now = () => new Date().toISOString();
 const cleanText = (value) => String(value || '').trim();
 const asArray = (value) => (Array.isArray(value) ? value : []);
 const sha256 = (value) => crypto.createHash('sha256').update(String(value ?? '')).digest('hex');
+export const RESEARCH_CONTRACT_VERSION = 'verified-research-v1';
+
+const MODEL_PRICING_PER_MILLION = {
+  'gpt-5.6-luna': { input: 0.20, cached: 0.02, cacheWrite: 0.25, output: 1.20 },
+  'gpt-4.1': { input: 2.00, cached: 0.50, cacheWrite: 2.00, output: 8.00 },
+  'gpt-4.1-mini': { input: 0.40, cached: 0.10, cacheWrite: 0.40, output: 1.60 },
+};
+
+function normalizeOpenAiUsage(raw, model) {
+  const details = raw?.prompt_tokens_details || {};
+  const inputTokens = Number(raw?.prompt_tokens) || 0;
+  const cachedInputTokens = Number(details?.cached_tokens) || 0;
+  const cacheWriteTokens = Number(details?.cache_write_tokens) || 0;
+  const outputTokens = Number(raw?.completion_tokens) || 0;
+  const totalTokens = Number(raw?.total_tokens) || inputTokens + outputTokens;
+  const rates = MODEL_PRICING_PER_MILLION[model] || null;
+  const uncachedInputTokens = Math.max(0, inputTokens - cachedInputTokens - cacheWriteTokens);
+  const estimatedCostUsd = rates
+    ? (
+      (uncachedInputTokens * rates.input)
+      + (cachedInputTokens * rates.cached)
+      + (cacheWriteTokens * rates.cacheWrite)
+      + (outputTokens * rates.output)
+    ) / 1_000_000
+    : null;
+  return {
+    model,
+    inputTokens,
+    cachedInputTokens,
+    cacheWriteTokens,
+    outputTokens,
+    totalTokens,
+    estimatedCostUsd,
+  };
+}
+
+function canonicalResearchHash(canonical) {
+  return sha256(`${cleanText(canonical?.english)}\n---\n${cleanText(canonical?.hebrew)}`);
+}
+
+function createUsageRecorder(client, context, telemetryEnabled = true) {
+  const events = [];
+  async function record(stageType, operation, usage, requestMetadata = {}) {
+    if (!usage) return;
+    const event = { stageType, operation, ...usage, requestMetadata };
+    events.push(event);
+    if (!client || !telemetryEnabled) return;
+    const { error } = await client.from('hebrew_ai_usage_events').insert({
+      revision_id: context?.revisionId || null,
+      pipeline_run_id: context?.pipelineRunId || null,
+      stage_type: stageType,
+      operation,
+      model: usage.model,
+      input_tokens: usage.inputTokens,
+      cached_input_tokens: usage.cachedInputTokens,
+      cache_write_tokens: usage.cacheWriteTokens,
+      output_tokens: usage.outputTokens,
+      total_tokens: usage.totalTokens,
+      estimated_cost_usd: usage.estimatedCostUsd,
+      request_metadata: requestMetadata,
+    });
+    if (error) console.error('Could not persist Hebrew AI usage telemetry.', error);
+  }
+  function summary() {
+    return {
+      request_count: events.length,
+      input_tokens: events.reduce((sum, item) => sum + item.inputTokens, 0),
+      cached_input_tokens: events.reduce((sum, item) => sum + item.cachedInputTokens, 0),
+      output_tokens: events.reduce((sum, item) => sum + item.outputTokens, 0),
+      estimated_cost_usd: Number(events.reduce((sum, item) => sum + (Number(item.estimatedCostUsd) || 0), 0).toFixed(8)),
+      events: events.map((item) => ({
+        stage_type: item.stageType,
+        operation: item.operation,
+        model: item.model,
+        input_tokens: item.inputTokens,
+        cached_input_tokens: item.cachedInputTokens,
+        output_tokens: item.outputTokens,
+        estimated_cost_usd: item.estimatedCostUsd,
+      })),
+    };
+  }
+  return { record, summary };
+}
 
 export function transcriptWordCount(value) {
   return cleanText(value).split(/\s+/).filter(Boolean).length;
@@ -31,22 +114,32 @@ function parseJsonContent(raw) {
   }
 }
 
-async function requestJson({ apiKey, model, messages, temperature = 0.5, maxTokens = 7000, timeoutMs = 90000 }) {
+async function requestJson({ apiKey, model, messages, temperature = 0.5, maxTokens = 7000, timeoutMs = 90000, reasoningEffort = 'none' }) {
+  const body = {
+    model,
+    max_tokens: maxTokens,
+    response_format: { type: 'json_object' },
+    messages,
+  };
+  if (String(model).startsWith('gpt-5.6')) {
+    body.reasoning_effort = reasoningEffort;
+    if (reasoningEffort === 'none') body.temperature = temperature;
+  } else {
+    body.temperature = temperature;
+  }
+
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
     signal: AbortSignal.timeout(timeoutMs),
-    body: JSON.stringify({
-      model,
-      temperature,
-      max_tokens: maxTokens,
-      response_format: { type: 'json_object' },
-      messages,
-    }),
+    body: JSON.stringify(body),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload?.error?.message || `OpenAI request failed (${response.status}).`);
-  return parseJsonContent(payload?.choices?.[0]?.message?.content);
+  return {
+    data: parseJsonContent(payload?.choices?.[0]?.message?.content),
+    usage: normalizeOpenAiUsage(payload?.usage, model),
+  };
 }
 
 function normalizeResearch(raw, reference, canonical) {
@@ -111,17 +204,9 @@ function validateLesson(lesson) {
   return wordCount;
 }
 
-async function createResearch(reference, canonical, env) {
-  const apiKey = env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY is missing from the Vercel project.');
-  const model = env.HEBREW_RESEARCH_MODEL || env.HEBREW_GENERATION_MODEL || 'gpt-4.1';
-  const prompt = `Build a verified research dossier and narrative map for a premium Christian Hebrew Bible audio episode on ${reference}.
+const RESEARCH_SYSTEM_PROMPT = `You are a conservative Christian Hebrew research editor. Accuracy outranks novelty.
 
-Canonical KJV:
-${canonical.english}
-
-Canonical Hebrew:
-${canonical.hebrew}
+Build a verified research dossier and narrative map for a premium Christian Hebrew Bible audio episode.
 
 Return JSON only with two top-level objects: research_dossier and narrative_map.
 
@@ -158,22 +243,189 @@ Rules:
 - Separate strong evidence from plausible interpretation.
 - Use fifth-grade clarity without losing depth.
 - The sermon will be continuous, not divided into announced sections.
-- Humor may observe ordinary human behavior but never joke about Scripture, God, sacred claims, or prayer.`;
+- Humor may observe ordinary human behavior but never joke about Scripture, God, sacred claims, or prayer.
+- Return valid JSON only.`;
 
-  const raw = await requestJson({
+async function createResearch(reference, canonical, env, recordUsage, operation = 'research_primary') {
+  const apiKey = env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is missing from the Vercel project.');
+  const model = env.HEBREW_RESEARCH_MODEL || env.HEBREW_GENERATION_MODEL || 'gpt-5.6-luna';
+  const response = await requestJson({
     apiKey,
     model,
     temperature: 0.2,
     maxTokens: 5500,
+    reasoningEffort: env.HEBREW_REASONING_EFFORT || 'none',
     messages: [
-      { role: 'system', content: 'You are a conservative Christian Hebrew research editor. Accuracy outranks novelty. Return valid JSON only.' },
+      { role: 'system', content: RESEARCH_SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `Reference: ${reference}\n\nCanonical KJV:\n${canonical.english}\n\nCanonical Hebrew:\n${canonical.hebrew}`,
+      },
+    ],
+  });
+  await recordUsage?.('research', operation, response.usage, { reference });
+  return { ...normalizeResearch(response.data, reference, canonical), model };
+}
+
+async function verifyResearch(reference, canonical, research, env, recordUsage, operation = 'research_verify') {
+  const apiKey = env.OPENAI_API_KEY;
+  const model = env.HEBREW_RESEARCH_VERIFIER_MODEL || 'gpt-4.1-mini';
+  const prompt = `Audit this research dossier for ${reference} against the supplied canonical verse.
+
+Reject only material problems: invented Hebrew facts, grammar, roots, Strong's numbers, quotations, history, archaeology, geography, cross-reference claims, or Christological claims that overstate the evidence. Distinguish an interpretive possibility from a factual error. Do not reject merely because a claim is concise.
+
+Return JSON only:
+{
+  "passed": true|false,
+  "material_concerns": [{"claim":"...","reason":"...","severity":"low|medium|high","recommended_fix":"..."}],
+  "verified_strengths": ["..."],
+  "verdict_reason": "..."
+}
+
+Canonical KJV:
+${canonical.english}
+
+Canonical Hebrew:
+${canonical.hebrew}
+
+Research dossier:
+${JSON.stringify(research.dossier)}
+
+Narrative map:
+${JSON.stringify(research.narrativeMap)}`;
+
+  const response = await requestJson({
+    apiKey,
+    model,
+    temperature: 0.1,
+    maxTokens: 1800,
+    timeoutMs: 65000,
+    messages: [
+      { role: 'system', content: 'You are an independent conservative Christian Hebrew accuracy reviewer. Be strict about factual invention and calibrated about interpretation. Return valid JSON only.' },
       { role: 'user', content: prompt },
     ],
   });
-  return { ...normalizeResearch(raw, reference, canonical), model };
+  await recordUsage?.('research_verify', operation, response.usage, { reference });
+  const concerns = asArray(response.data?.material_concerns);
+  const highOrMedium = concerns.filter((item) => ['medium', 'high'].includes(String(item?.severity || '').toLowerCase()));
+  return {
+    passed: response.data?.passed === true && highOrMedium.length === 0,
+    raw: response.data,
+    model,
+  };
 }
 
-async function writeSermon(reference, canonical, research, env) {
+async function buildVerifiedResearch(reference, canonical, env, recordUsage) {
+  let primary = null;
+  let primaryFailure = null;
+  let primaryVerification = null;
+  try {
+    primary = await createResearch(reference, canonical, env, recordUsage, 'research_primary');
+    try {
+      primaryVerification = await verifyResearch(reference, canonical, primary, env, recordUsage, 'research_verify_primary');
+      if (primaryVerification.passed) {
+        return {
+          ...primary,
+          verifierModel: primaryVerification.model,
+          verification: primaryVerification.raw,
+          usedFallback: false,
+        };
+      }
+    } catch (error) {
+      primaryFailure = error;
+    }
+  } catch (error) {
+    primaryFailure = error;
+  }
+
+  const fallbackModel = env.HEBREW_RESEARCH_FALLBACK_MODEL || 'gpt-4.1';
+  const fallbackEnv = { ...env, HEBREW_RESEARCH_MODEL: fallbackModel };
+  const fallback = await createResearch(reference, canonical, fallbackEnv, recordUsage, 'research_fallback');
+  try {
+    const fallbackVerification = await verifyResearch(reference, canonical, fallback, env, recordUsage, 'research_verify_fallback');
+    if (!fallbackVerification.passed) {
+      throw new Error(`Premium fallback research failed verification: ${cleanText(fallbackVerification.raw?.verdict_reason) || 'material concerns remain'}.`);
+    }
+    return {
+      ...fallback,
+      verifierModel: fallbackVerification.model,
+      verification: fallbackVerification.raw,
+      usedFallback: true,
+      primaryFailure: primaryFailure?.message || (primaryVerification?.raw?.verdict_reason ? String(primaryVerification.raw.verdict_reason) : null),
+    };
+  } catch (error) {
+    if (/failed verification/i.test(error?.message || '')) throw error;
+    return {
+      ...fallback,
+      verifierModel: env.HEBREW_RESEARCH_VERIFIER_MODEL || 'gpt-4.1-mini',
+      verification: {
+        passed: true,
+        mode: 'premium_fallback_verifier_unavailable',
+        verifier_error: error?.message || String(error),
+      },
+      usedFallback: true,
+      primaryFailure: primaryFailure?.message || null,
+    };
+  }
+}
+
+async function loadCachedResearch(client, reference, canonical) {
+  if (!client) return null;
+  const canonicalHash = canonicalResearchHash(canonical);
+  const { data, error } = await client
+    .from('hebrew_research_cache')
+    .select('*')
+    .eq('reference', reference)
+    .eq('status', 'verified')
+    .maybeSingle();
+  if (error) {
+    console.error('Could not read Hebrew research cache.', error);
+    return null;
+  }
+  if (!data || data.canonical_hash !== canonicalHash) return null;
+  return {
+    dossier: data.dossier,
+    narrativeMap: data.narrative_map,
+    model: data.research_model,
+    verifierModel: data.verifier_model,
+    verification: data.verification || {},
+    usedFallback: false,
+    cacheHit: true,
+  };
+}
+
+async function saveResearchCache(client, reference, canonical, research) {
+  if (!client) return;
+  const payload = {
+    reference,
+    canonical_hash: canonicalResearchHash(canonical),
+    research_contract_version: RESEARCH_CONTRACT_VERSION,
+    dossier: research.dossier,
+    narrative_map: research.narrativeMap,
+    research_model: research.model,
+    verifier_model: research.verifierModel || null,
+    verification: research.verification || {},
+    status: 'verified',
+    updated_at: now(),
+  };
+  const { error } = await client.from('hebrew_research_cache').upsert(payload, { onConflict: 'reference' });
+  if (error) console.error('Could not persist Hebrew research cache.', error);
+}
+
+async function getResearch(reference, canonical, env, runtime, recordUsage) {
+  if (runtime?.researchCacheEnabled !== false) {
+    const cached = await loadCachedResearch(runtime?.client, reference, canonical);
+    if (cached) return cached;
+  }
+  const research = await buildVerifiedResearch(reference, canonical, env, recordUsage);
+  if (runtime?.researchCacheEnabled !== false) {
+    await saveResearchCache(runtime?.client, reference, canonical, research);
+  }
+  return { ...research, cacheHit: false };
+}
+
+async function writeSermon(reference, canonical, research, env, recordUsage) {
   const apiKey = env.OPENAI_API_KEY;
   const model = env.HEBREW_SERMON_MODEL || env.HEBREW_GENERATION_MODEL || 'gpt-4.1';
   const prompt = `Write the complete premium daily Hebrew Bible teaching episode for ${reference} from the approved research and narrative map below.
@@ -207,6 +459,16 @@ Experience contract:
 - Do not announce sections, points, headings, or transitions such as "now let us discuss" or "in conclusion."
 - Never add claims marked unsupported.
 
+Before returning, silently run this preflight:
+1. word count is inside the hard range
+2. the transcript is one continuous spoken experience
+3. at least four genuine discoveries have clear payoff
+4. Hebrew is woven into the story rather than dumped
+5. no unsupported factual or theological claim was introduced
+6. the Jesus connection keeps its stated guardrail
+7. there is an ordinary human moment and a concrete action
+8. the ending lands emotionally, includes prayer, and creates next-verse anticipation
+
 Return JSON only with:
 title, sermon_title, description, transliteration, opening_hook, central_truth, big_idea, simple_summary, transcript, key_words, strongs_word_stories, cross_references, strongs_cross_references, did_you_know_see_jesus_here, practical_reflection, closing_invitation, prayer, memory_phrase, series_connection, format_version.
 
@@ -217,7 +479,7 @@ did_you_know_see_jesus_here: did_you_know, see_jesus_here, guardrail, references
 series_connection: previous and next.
 format_version: ${V4_PIPELINE_VERSION}.`;
 
-  const lesson = await requestJson({
+  const response = await requestJson({
     apiKey,
     model,
     temperature: 0.72,
@@ -228,13 +490,15 @@ format_version: ${V4_PIPELINE_VERSION}.`;
       { role: 'user', content: prompt },
     ],
   });
+  await recordUsage?.('sermon_write', 'sermon_write', response.usage, { reference });
+  const lesson = response.data;
   lesson.format_version = V4_PIPELINE_VERSION;
   return { lesson, model };
 }
 
-async function repairTranscript(reference, lesson, research, env, directives = []) {
+async function repairTranscript(reference, lesson, research, env, directives = [], recordUsage, repairNumber = 1) {
   const apiKey = env.OPENAI_API_KEY;
-  const model = env.HEBREW_SERMON_MODEL || env.HEBREW_GENERATION_MODEL || 'gpt-4.1';
+  const model = env.HEBREW_REPAIR_MODEL || env.HEBREW_SERMON_MODEL || env.HEBREW_GENERATION_MODEL || 'gpt-4.1';
   const currentWords = transcriptWordCount(lesson.transcript);
   const prompt = `Rewrite only the spoken transcript for this ${reference} episode.
 
@@ -255,23 +519,24 @@ ${lesson.transcript}
 
 Return JSON only as {"transcript":"..."}. Before returning, silently count the transcript and do not return fewer than ${MIN_TRANSCRIPT_WORDS} words or more than ${MAX_TRANSCRIPT_WORDS} words.`;
 
-  const repaired = await requestJson({
+  const response = await requestJson({
     apiKey,
     model,
     temperature: 0.55,
     maxTokens: 4200,
     timeoutMs: 90000,
     messages: [
-      { role: 'system', content: 'You are a precise Christian sermon editor. Return valid JSON only.' },
+      { role: 'system', content: 'You are a precise Christian sermon editor. Preserve approved theology and factual claims. Return valid JSON only.' },
       { role: 'user', content: prompt },
     ],
   });
-  const transcript = cleanText(repaired?.transcript);
+  await recordUsage?.('sermon_repair', 'sermon_repair', response.usage, { reference, repair_number: repairNumber });
+  const transcript = cleanText(response.data?.transcript);
   if (!transcript) throw new Error('Transcript repair returned no transcript.');
   return { ...lesson, transcript };
 }
 
-async function evaluateSermon(reference, lesson, research, env) {
+async function evaluateSermon(reference, lesson, research, env, recordUsage) {
   const apiKey = env.OPENAI_API_KEY;
   const model = env.HEBREW_EVALUATION_MODEL || 'gpt-4.1-mini';
   const spoken = spokenLanguageChecks(lesson.transcript);
@@ -305,7 +570,7 @@ ${JSON.stringify(spoken)}
 Sermon:
 ${JSON.stringify(lesson)}`;
 
-  const raw = await requestJson({
+  const response = await requestJson({
     apiKey,
     model,
     temperature: 0.1,
@@ -316,42 +581,58 @@ ${JSON.stringify(lesson)}`;
       { role: 'user', content: prompt },
     ],
   });
-  return { evaluation: normalizeEvaluation(raw), spoken, raw, model };
+  await recordUsage?.('sermon_evaluate', 'sermon_evaluate', response.usage, { reference });
+  return { evaluation: normalizeEvaluation(response.data), spoken, raw: response.data, model };
 }
 
-export async function generateV4Episode(reference, canonical, env = process.env) {
-  const research = await createResearch(reference, canonical, env);
-  const written = await writeSermon(reference, canonical, research, env);
+export async function generateV4Episode(reference, canonical, env = process.env, runtime = {}) {
+  const usage = createUsageRecorder(runtime.client, runtime.context, runtime.telemetryEnabled !== false);
+  const research = await getResearch(reference, canonical, env, runtime, usage.record);
+  const written = await writeSermon(reference, canonical, research, env, usage.record);
   let lesson = written.lesson;
   let repairCount = 0;
+  const maxPaidRepairs = Number.isInteger(runtime.maxPaidRepairs) ? runtime.maxPaidRepairs : 3;
+
+  const runRepair = async (directives) => {
+    if (repairCount >= maxPaidRepairs) {
+      throw new Error(`Hebrew cost guard stopped the episode after ${repairCount} paid sermon repairs.`);
+    }
+    lesson = await repairTranscript(
+      reference,
+      lesson,
+      research,
+      env,
+      directives,
+      usage.record,
+      repairCount + 1,
+    );
+    repairCount += 1;
+  };
 
   const initialWords = transcriptWordCount(lesson.transcript);
   if (transcriptNeedsRepair(initialWords)) {
-    lesson = await repairTranscript(reference, lesson, research, env, [
+    await runRepair([
       `Bring the transcript into the required ${MIN_TRANSCRIPT_WORDS}-${MAX_TRANSCRIPT_WORDS} word range.`,
     ]);
-    repairCount += 1;
   }
 
-  let review = await evaluateSermon(reference, lesson, research, env);
+  let review = await evaluateSermon(reference, lesson, research, env, usage.record);
   if (!review.evaluation.passed || !review.spoken.passed) {
     const directives = [
       ...review.evaluation.rewriteDirectives,
       ...(!review.spoken.passed ? ['Correct every mechanical spoken-language failure in the supplied report.'] : []),
     ];
-    lesson = await repairTranscript(reference, lesson, research, env, directives);
-    repairCount += 1;
-    review = await evaluateSermon(reference, lesson, research, env);
+    await runRepair(directives);
+    review = await evaluateSermon(reference, lesson, research, env, usage.record);
   }
 
   const postProducerWords = transcriptWordCount(lesson.transcript);
   if (transcriptNeedsRepair(postProducerWords)) {
-    lesson = await repairTranscript(reference, lesson, research, env, [
+    await runRepair([
       `The producer rewrite changed the transcript to ${postProducerWords} words. Preserve every approved quality improvement while bringing it into the required ${MIN_TRANSCRIPT_WORDS}-${MAX_TRANSCRIPT_WORDS} range.`,
       'Do not weaken biblical faithfulness, Hebrew integration, spoken naturalness, emotional movement, listener engagement, or the ending.',
     ]);
-    repairCount += 1;
-    review = await evaluateSermon(reference, lesson, research, env);
+    review = await evaluateSermon(reference, lesson, research, env, usage.record);
   }
 
   const wordCount = validateLesson(lesson);
@@ -360,6 +641,7 @@ export async function generateV4Episode(reference, canonical, env = process.env)
     throw new Error(`V4 producer gate failed at ${review.evaluation.weightedScore}: ${review.evaluation.rewriteDirectives.join('; ')}`);
   }
 
+  const usageSummary = usage.summary();
   lesson.experience_quality = {
     passed: true,
     pipeline_version: V4_PIPELINE_VERSION,
@@ -367,6 +649,7 @@ export async function generateV4Episode(reference, canonical, env = process.env)
     scores: review.evaluation.scores,
     spoken: review.spoken,
     rewrite_count: repairCount,
+    estimated_text_cost_usd: usageSummary.estimated_cost_usd,
     evaluated_at: now(),
   };
 
@@ -379,9 +662,14 @@ export async function generateV4Episode(reference, canonical, env = process.env)
     spoken: review.spoken,
     model: written.model,
     researchModel: research.model,
+    researchVerifierModel: research.verifierModel || null,
+    researchVerification: research.verification || {},
+    researchUsedFallback: Boolean(research.usedFallback),
+    researchCacheHit: Boolean(research.cacheHit),
     evaluationModel: review.model,
     wordCount,
     repairCount,
+    usageSummary,
   };
 }
 
@@ -471,6 +759,9 @@ export async function persistV4Generation(client, context, generated, canonical)
     hebrew_observations: generated.dossier.hebrew_observations.length,
     cross_references: generated.dossier.cross_references.length,
     model: generated.researchModel,
+    verifier_model: generated.researchVerifierModel,
+    used_fallback: generated.researchUsedFallback,
+    cache_hit: generated.researchCacheHit,
   });
   await recordStage(client, pipelineRunId, revisionId, 'research_verify', {
     output_hash: dossier.content_hash,
@@ -500,7 +791,13 @@ export async function persistV4Generation(client, context, generated, canonical)
       generation_metadata: {
         research_model: generated.researchModel,
         evaluation_model: generated.evaluationModel,
+        research_verifier_model: generated.researchVerifierModel,
+        research_used_fallback: generated.researchUsedFallback,
+        research_cache_hit: generated.researchCacheHit,
+        research_verification: generated.researchVerification,
         repair_count: generated.repairCount,
+        estimated_text_cost_usd: generated.usageSummary?.estimated_cost_usd ?? null,
+        usage_summary: generated.usageSummary || null,
         spoken: generated.spoken,
       },
       content_hash: draftHash,
@@ -515,6 +812,7 @@ export async function persistV4Generation(client, context, generated, canonical)
     word_count: generated.wordCount,
     model: generated.model,
     repair_count: generated.repairCount,
+    estimated_text_cost_usd: generated.usageSummary?.estimated_cost_usd ?? null,
   });
 
   const scores = generated.evaluation.scores;

@@ -15,6 +15,47 @@ const GENESIS_VERSE_COUNTS = [0,31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,
 const RECOVERABLE_REVISION_STATUSES = ['failed', 'producing_audio', 'producing_visuals', 'verifying', 'ready_for_release'];
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+async function loadCostControl(client) {
+  const defaults = {
+    enabled: true,
+    research_model: 'gpt-5.6-luna',
+    research_verifier_model: 'gpt-4.1-mini',
+    research_fallback_model: 'gpt-4.1',
+    sermon_model: 'gpt-4.1',
+    evaluation_model: 'gpt-4.1-mini',
+    repair_model: 'gpt-4.1',
+    reasoning_effort: 'none',
+    research_cache_enabled: true,
+    telemetry_enabled: true,
+    hard_budget_enabled: false,
+    max_paid_repairs: 3,
+  };
+  const { data, error } = await client
+    .from('hebrew_cost_control')
+    .select('*')
+    .eq('config_key', 'production')
+    .maybeSingle();
+  if (error) {
+    console.error('Could not load Hebrew cost control; using safe defaults.', error);
+    return defaults;
+  }
+  return { ...defaults, ...(data || {}) };
+}
+
+function applyCostControlToEnv(env, config) {
+  if (!config?.enabled) return env;
+  return {
+    ...env,
+    HEBREW_RESEARCH_MODEL: config.research_model,
+    HEBREW_RESEARCH_VERIFIER_MODEL: config.research_verifier_model,
+    HEBREW_RESEARCH_FALLBACK_MODEL: config.research_fallback_model,
+    HEBREW_SERMON_MODEL: config.sermon_model,
+    HEBREW_EVALUATION_MODEL: config.evaluation_model,
+    HEBREW_REPAIR_MODEL: config.repair_model,
+    HEBREW_REASONING_EFFORT: config.reasoning_effort || 'none',
+  };
+}
+
 function send(res, status, body) {
   res.statusCode = status;
   for (const [key, value] of Object.entries(JSON_HEADERS)) res.setHeader(key, value);
@@ -291,6 +332,12 @@ function recoveredGenerationMetadata(recovery) {
     model: recovery.draft.model,
     researchModel: metadata.research_model || null,
     evaluationModel: metadata.evaluation_model || null,
+    researchVerifierModel: metadata.research_verifier_model || null,
+    researchUsedFallback: Boolean(metadata.research_used_fallback),
+    researchCacheHit: Boolean(metadata.research_cache_hit),
+    usageSummary: metadata.usage_summary || {
+      estimated_cost_usd: Number(metadata.estimated_text_cost_usd) || 0,
+    },
   };
 }
 
@@ -401,6 +448,10 @@ function responsePayload({ target, lesson, audio, context, generated, resumed })
     model: generated.model,
     research_model: generated.researchModel,
     evaluation_model: generated.evaluationModel,
+    research_verifier_model: generated.researchVerifierModel || null,
+    research_cache_hit: Boolean(generated.researchCacheHit),
+    research_used_fallback: Boolean(generated.researchUsedFallback),
+    estimated_text_cost_usd: Number(generated.usageSummary?.estimated_cost_usd) || 0,
     status: audio.track.status,
     published: false,
     v4_next_stage: 'visual_plan',
@@ -449,7 +500,15 @@ export default async function handler(req, res) {
       String(req.headers['x-hebrew-generation-job-id'] || 'mission_control'),
     );
 
-    const generated = await generateV4Episode(target.reference, canonical, process.env);
+    const costControl = await loadCostControl(client);
+    const runtimeEnv = applyCostControlToEnv(process.env, costControl);
+    const generated = await generateV4Episode(target.reference, canonical, runtimeEnv, {
+      client,
+      context: v4Context,
+      telemetryEnabled: costControl.telemetry_enabled !== false,
+      researchCacheEnabled: costControl.research_cache_enabled !== false,
+      maxPaidRepairs: Number(costControl.max_paid_repairs) || 3,
+    });
     await persistV4Generation(client, v4Context, generated, canonical);
 
     const lesson = await ensureLesson(client, target, canonical, generated.lesson);

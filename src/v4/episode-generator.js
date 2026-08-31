@@ -115,16 +115,18 @@ function parseJsonContent(raw) {
 }
 
 async function requestJson({ apiKey, model, messages, temperature = 0.5, maxTokens = 7000, timeoutMs = 90000, reasoningEffort = 'none' }) {
+  const isGpt56 = String(model).startsWith('gpt-5.6');
   const body = {
     model,
-    max_tokens: maxTokens,
     response_format: { type: 'json_object' },
     messages,
   };
-  if (String(model).startsWith('gpt-5.6')) {
+  if (isGpt56) {
+    body.max_completion_tokens = maxTokens;
     body.reasoning_effort = reasoningEffort;
     if (reasoningEffort === 'none') body.temperature = temperature;
   } else {
+    body.max_tokens = maxTokens;
     body.temperature = temperature;
   }
 

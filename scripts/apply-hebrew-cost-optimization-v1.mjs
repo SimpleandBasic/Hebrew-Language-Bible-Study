@@ -216,7 +216,7 @@ Narrative map:
     messages: [`);
     }
     if (!block.includes('Silently run this cost-saving preflight')) {
-      const marker = 'Return JSON only with:\\ntitle, sermon_title, description, transliteration';
+      const marker = 'Return JSON only with:\ntitle, sermon_title, description, transliteration';
       if (!block.includes(marker)) return block;
       block = block.replace(marker, `Silently run this cost-saving preflight before returning:
 - transcript word count is inside the hard range
@@ -301,13 +301,13 @@ Narrative map:
     block = block.replaceAll('repairTranscript(reference, lesson, research, env,', 'repairTranscript(reference, lesson, research, runtimeEnv,');
     block = block.replaceAll('evaluateSermon(reference, lesson, research, env)', 'evaluateSermon(reference, lesson, research, runtimeEnv)');
     if (!block.includes('const usageSummary = usage.summary();')) {
-      const marker = '  return {\\n    lesson,';
+      const marker = '  return {\n    lesson,';
       if (!block.includes(marker)) fail('generation return');
-      block = block.replace(marker, '  const usageSummary = usage.summary();\\n\\n' + marker);
+      block = block.replace(marker, '  const usageSummary = usage.summary();\n\n' + marker);
     }
     if (!block.includes('researchVerifierModel: research.researchVerifierModel')) {
       block = block.replace(
-        '    researchModel: research.model,\\n    evaluationModel: review.model,',
+        '    researchModel: research.model,\n    evaluationModel: review.model,',
         `    researchModel: research.model,
     researchVerifierModel: research.researchVerifierModel || null,
     researchVerification: research.researchVerification || null,
@@ -316,16 +316,16 @@ Narrative map:
       );
     }
     if (!block.includes('    usageSummary,')) {
-      block = block.replace('    repairCount,\\n  };', '    repairCount,\\n    usageSummary,\\n  };');
+      block = block.replace('    repairCount,\n  };', '    repairCount,\n    usageSummary,\n  };');
     }
     if (!block.includes('estimated_text_cost_usd: usageSummary.estimated_cost_usd')) {
-      block = block.replace('    rewrite_count: repairCount,', '    rewrite_count: repairCount,\\n    estimated_text_cost_usd: usageSummary.estimated_cost_usd,');
+      block = block.replace('    rewrite_count: repairCount,', '    rewrite_count: repairCount,\n    estimated_text_cost_usd: usageSummary.estimated_cost_usd,');
     }
     return block;
   });
 
   if (!source.includes('research_verifier_model: generated.researchVerifierModel')) {
-    const marker = '        research_model: generated.researchModel,\\n        evaluation_model: generated.evaluationModel,';
+    const marker = '        research_model: generated.researchModel,\n        evaluation_model: generated.evaluationModel,';
     if (!source.includes(marker)) fail('generation metadata');
     source = source.replace(marker, `        research_model: generated.researchModel,
         research_verifier_model: generated.researchVerifierModel,
@@ -406,7 +406,7 @@ function applyHebrewCostControl(env, config) {
   }
 
   if (!source.includes('estimated_text_cost_usd: Number(generated.usageSummary?.estimated_cost_usd) || 0')) {
-    const marker = '    evaluation_model: generated.evaluationModel,\\n    status: audio.track.status,';
+    const marker = '    evaluation_model: generated.evaluationModel,\n    status: audio.track.status,';
     if (!source.includes(marker)) fail('response metadata');
     source = source.replace(marker, `    evaluation_model: generated.evaluationModel,
     research_verifier_model: generated.researchVerifierModel || null,

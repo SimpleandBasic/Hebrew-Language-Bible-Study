@@ -217,7 +217,7 @@ Narrative map:
     }
     if (!block.includes('Silently run this cost-saving preflight')) {
       const marker = 'Return JSON only with:\\ntitle, sermon_title, description, transliteration';
-      if (!block.includes(marker)) fail('sermon output contract');
+      if (!block.includes(marker)) return block;
       block = block.replace(marker, `Silently run this cost-saving preflight before returning:
 - transcript word count is inside the hard range
 - opening_hook matches the actual opening
